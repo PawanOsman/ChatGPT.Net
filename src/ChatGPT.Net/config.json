@@ -1,0 +1,11 @@
+﻿{
+  "Account": {
+    "Type": "Microsoft",
+    "Email": "",
+    "Password": ""
+  },
+  "DataDir": "",
+  "Incognito": false,
+  "Proxies": {
+  }
+}
