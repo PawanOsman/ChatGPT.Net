@@ -69,3 +69,7 @@ import requests
 response = requests.get('http://127.0.0.1:5000/chat?q=Hello')
 print(response.text)
 ```
+
+## My projects with this API
+1. ChatGPT Unofficial free API without Authentication [Click Here](https://github.com/PawanOsman/ChatGPT)
+2. Talk with ChatGPT with +130 Languages [Website] [Click Here](https://chat.pawan.krd)
