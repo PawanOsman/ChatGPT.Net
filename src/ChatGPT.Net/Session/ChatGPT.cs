@@ -197,13 +197,13 @@ public class ChatGpt
                                 break;
                         }
                     }
-                    
+
                     await Page.GotoAsync("https://chat.openai.com");
-                    
                     Ready = true;
-                    while (true) await Task.Delay(25);
+                    await Task.Delay(1800000);
                 }
 
+                Ready = false;
                 Console.WriteLine("CF challenge failed. Retrying...");
                 await Page.CloseAsync();
             }
@@ -253,15 +253,18 @@ public class ChatGpt
 
     public async Task<string> Ask(string prompt)
     {
-        var conversation = new Conversation();
-        conversation.ParentMessageId = ParentMessageId;
-        conversation.Messages = new[]
+        await WaitForReady();
+        var conversation = new Conversation
         {
-            new Message
+            ParentMessageId = ParentMessageId,
+            Messages = new[]
             {
-                Content = new Content
+                new Message
                 {
-                    Parts = new[] { prompt }
+                    Content = new Content
+                    {
+                        Parts = new[] { prompt }
+                    }
                 }
             }
         };
