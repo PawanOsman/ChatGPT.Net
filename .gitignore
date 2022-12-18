@@ -37,3 +37,6 @@ msbuild.wrn
 .vs/
 
 config.json
+Data/
+src/ChatGPT.Net/config.json
+*.json
