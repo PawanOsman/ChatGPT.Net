@@ -11,6 +11,12 @@ The Unofficial .Net API for ChatGPT is a C# library that allows developers to ac
 -   Saves cookies to allow the application to restart without requiring a login
 -   Provides a simple API for use in other applications
 
+## Todo
+-   Implement login with Google and email
+-   Allow the addition of proxies
+-   Add conversation ID functionality
+
+
 ## Getting Started
 
 To use the Unofficial .Net API for ChatGPT, you will need to have a ChatGPT account and obtain the necessary credentials. Once you have these, you can set up the API by following these steps:
