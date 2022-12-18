@@ -20,22 +20,40 @@ To use the Unofficial .Net API for ChatGPT, you will need to have a ChatGPT acco
 3.  Enter your ChatGPT credentials in the appropriate fields.
 4.  Run the API on your local server (e.g. `http://127.0.0.1:5000/`).
 
+## Note
+you need `Xvfb` to run it in linux server "without display", use the commands below to insstall it and configure a virtual display (Ubuntu Server)
+
+1. install using this command
+```bash
+sudo apt-get install xvfb
+```
+
+2. Create a virtual display:
+```bash
+Xvfb :99 -screen 0 1280x1024x24 &
+```
+
+3. Run the project with this command:
+```bash
+export DISPLAY=:99; ./ChatGPT.Net --urls 'http://*:5000'
+```
+
 ## Using the API
 
 Once the API is set up and running, you can send requests to the endpoint with the desired query as the `q` parameter. The API will then return a JSON object with the following structure:
 
-```
+```json
 {
   "Status": true,
   "Response": "Hey!"
 }
-``` 
+```` 
 
 The `Status` field indicates whether the request was successful or not. If `Status` is `true`, the `Response` field will contain the response from ChatGPT. If `Status` is `false`, an error message will be returned in the `Response` field.
 
 Here is an example of using the API to send a query and receive a response in Node.js:
 
-```
+```javascript
 const request = require('request');
 
 request.get('http://127.0.0.1:5000/chat?q=Hello', (error, response, body) => {
@@ -45,9 +63,9 @@ request.get('http://127.0.0.1:5000/chat?q=Hello', (error, response, body) => {
 
 And in Python:
 
-```
+```python
 import requests
 
 response = requests.get('http://127.0.0.1:5000/chat?q=Hello')
 print(response.text)
-``` 
+` ``
