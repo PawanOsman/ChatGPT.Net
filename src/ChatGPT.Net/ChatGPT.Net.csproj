@@ -1,43 +1,38 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
-        <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Title>ChatGPT Unofficial .Net API</Title>
+        <Description>The Unofficial .Net API for ChatGPT is a C# library that allows developers to access ChatGPT, a chat-based language model, through a HTTP interface. With this API, developers can send queries to ChatGPT and receive responses in real-time, making it easy to integrate ChatGPT into their own applications.</Description>
+        <PackageProjectUrl>https://github.com/PawanOsman/ChatGPT.Net</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/PawanOsman/ChatGPT.Net/blob/main/LICENSE</PackageLicenseUrl>
+        <PackageIcon>artificial-intelligence.png</PackageIcon>
+        <RepositoryUrl>https://github.com/PawanOsman/ChatGPT.Net</RepositoryUrl>
+        <PackageTags>chat,chatgpt,ai,unofficial</PackageTags>
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>ChatGPT.snk</AssemblyOriginatorKeyFile>
+        <PublicSign>true</PublicSign>
+        <LangVersion>default</LangVersion>
+        <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.1" />
-        <PackageReference Include="Microsoft.Playwright" Version="1.28.0" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0" />
+      <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
+      <PackageReference Include="Microsoft.Net.Http.Headers" Version="2.2.8" />
+      <PackageReference Include="Microsoft.Playwright" Version="1.28.0" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="JsScripts\canvas.fingerprinting.js">
+      <None Remove="artificial-intelligence.png" />
+      <Resource Include="artificial-intelligence.png">
+        <Pack>True</Pack>
+        <PackagePath></PackagePath>
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="JsScripts\chrome.global.js">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="JsScripts\chrome.plugin.js">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="JsScripts\chrome.runtime.js">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="JsScripts\emulate.touch.js">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="JsScripts\mainFunctions.js">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="JsScripts\navigator.permissions.js">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="JsScripts\navigator.webdriver.js">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
+      </Resource>
     </ItemGroup>
 
 </Project>

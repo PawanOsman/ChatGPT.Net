@@ -1,16 +1,15 @@
 using ChatGPT.Net.DTO;
 using ChatGPT.Net.Session;
-using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
-var jsonString = await File.ReadAllTextAsync(Path.Combine(Directory.GetCurrentDirectory(), "config.json"));
-
-var config = JsonConvert.DeserializeObject<ChatGptConfig>(jsonString);
-
-var chatGpt = new ChatGpt(config);
+var chatGpt = new ChatGpt();
 await chatGpt.WaitForReady();
+var chatGptClient = await chatGpt.CreateClient(new ChatGptClientConfig
+{
+    SessionToken = "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0...."
+});
 
 app.MapGet("/", async (HttpRequest request) => Results.Ok(new
 {
@@ -27,7 +26,7 @@ app.MapGet("/chat", async (HttpRequest request) =>
         });
 
     var query = request.Query["q"].ToString();
-    var response = await chatGpt.Ask(query);
+    var response = await chatGptClient.Ask(query);
     return Results.Ok(new
     {
         Status = true,

@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatGPT.Net", "ChatGPT.Net\ChatGPT.Net.csproj", "{7DE2997E-A250-49A8-A748-DBFB99231E9C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatGPT.Net.Web", "ChatGPT.Net.Web\ChatGPT.Net.Web.csproj", "{7DE2997E-A250-49A8-A748-DBFB99231E9C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatGPT.Net", "ChatGPT.Net\ChatGPT.Net.csproj", "{EFFFF53D-219F-48E1-87D2-4ABA130CC37F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +14,9 @@ Global
 		{7DE2997E-A250-49A8-A748-DBFB99231E9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7DE2997E-A250-49A8-A748-DBFB99231E9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7DE2997E-A250-49A8-A748-DBFB99231E9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EFFFF53D-219F-48E1-87D2-4ABA130CC37F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFFFF53D-219F-48E1-87D2-4ABA130CC37F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFFFF53D-219F-48E1-87D2-4ABA130CC37F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFFFF53D-219F-48E1-87D2-4ABA130CC37F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

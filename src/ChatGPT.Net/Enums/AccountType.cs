@@ -1,4 +1,4 @@
-﻿namespace ChatGPT.Net;
+﻿namespace ChatGPT.Net.Enums;
 
 public enum AccountType
 {

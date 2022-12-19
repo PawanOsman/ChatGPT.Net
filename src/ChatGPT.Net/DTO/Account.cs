@@ -1,4 +1,6 @@
-﻿namespace ChatGPT.Net.DTO;
+﻿using ChatGPT.Net.Enums;
+
+namespace ChatGPT.Net.DTO;
 
 public class Account
 {

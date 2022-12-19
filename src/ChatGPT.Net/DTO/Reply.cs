@@ -1,13 +1,12 @@
 ﻿using Newtonsoft.Json;
 
-namespace ChatGPT.Net.DTO
-{
-    public class Reply
-    {
-        [JsonProperty("message")]
-        public Message Message { get; set; }
+namespace ChatGPT.Net.DTO;
 
-        [JsonProperty("conversation_id")]
-        public string ConversationId { get; set; }
-    }
+public class Reply
+{
+    [JsonProperty("message")]
+    public Message Message { get; set; }
+
+    [JsonProperty("conversation_id")]
+    public string ConversationId { get; set; }
 }
