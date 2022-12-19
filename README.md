@@ -102,6 +102,6 @@ export DISPLAY=:99; ./ChatGPT.Net'
 ```
 
 
-## Projects with this package
+## Projects
 1. ChatGPT Unofficial free API without Authentication [Click Here](https://github.com/PawanOsman/ChatGPT)
 2. Talk with ChatGPT with +130 Languages [Website] [Click Here](https://chat.pawan.krd)
