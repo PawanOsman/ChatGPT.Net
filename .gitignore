@@ -40,3 +40,4 @@ config.json
 Data/
 src/ChatGPT.Net/config.json
 *.json
+src/ChatGPT.Net/ChatGPT.snk
