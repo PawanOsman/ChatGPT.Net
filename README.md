@@ -1,4 +1,5 @@
 
+
 ## ChatGPT.Net - Unoficial API client for ChatGPT
 
 [![GitHub issues](https://img.shields.io/github/issues/pawanosman/ChatGPT.Net)](https://github.com/PawanOsman/ChatGPT.Net/issues)
@@ -101,6 +102,24 @@ Xvfb :99 -screen 0 1280x1024x24 &
 export DISPLAY=:99; ./ChatGPT.Net'
 ```
 
+## Troubleshooting
+
+If you run your project and it freezes without the headless browser opening, it is likely that you have not installed Chromium and other WebKit tools required to run the browser. These tools are used by Playwright to control the headless browser, and must be installed in order to properly run the project.
+
+**To fix this issue, follow these steps:**
+
+1.  Ensure that you have PowerShell 7+ installed on your machine. If you do not have PowerShell 7+ installed, you can download it [here](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.3#installing-the-msi-package).
+    
+2.  After building your project, open PowerShell 7 in your project directory and run the following command:
+    
+
+```powershell
+pwsh bin/Debug/netX/playwright.ps1 install
+```
+
+*Note: "**netX**" should be replaced with your specific .Net version (e.g. net6.0).
+
+This command will install all necessary browsers and tools for Playwright to properly control the headless browser. Please allow time for the installation to complete.
 
 ## Projects
 1. ChatGPT Unofficial free API without Authentication [Click Here](https://github.com/PawanOsman/ChatGPT)
