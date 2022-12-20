@@ -27,16 +27,15 @@ Console.WriteLine(response);
 
 ## Features
 
--   Automatic login to ChatGPT account (Microsoft accounts or SessionToken)
--   Bypasses Cloudflare protection
--   Bypasses fake ratelimit protection
+-   Automatic login to ChatGPT using Microsoft accounts or SessionToken
+-   Bypasses Cloudflare protection and fake rate limit protection
 -   Saves cookies to allow the application to restart without requiring a login
--   Provides a simple API for use in other applications
--   Can reset conversation or create multiple conversations in the same time. 
--   Auto refresh ChatGPT access token.
--   Auto refresh Cloudflare cf_clearance cookie.
+-   Ability to reset conversations or create multiple conversations simultaneously
+-   Automatic refresh of ChatGPT access token and Cloudflare cf_clearance cookie for uninterrupted use
+-   Uses a single browser window/tab for managing and using multiple accounts, saving server resources when working with multiple accounts
 
-## Todo
+## To-Do List:
+
 -   Implement login with Google and email
 -   Allow the addition of proxies
 
@@ -82,7 +81,15 @@ var response2 = await chatGptClient2 .Ask("What is the weather like today?");
 Console.WriteLine(response2);
 ```
 
-In the above code, we first create a new `ChatGpt` object and wait for it to be ready. Then, we create a new `ChatGptClient` using the `CreateClient` method, passing in a `ChatGptClientConfig` object containing the session token. Finally, we use the `Ask` method of the `ChatGptClient` to send a query to the ChatGPT service and print the response.
+The code above demonstrates how to use the ChatGPT.Net library to create and interact with multiple ChatGPT clients and conversations simultaneously.
+
+The `ChatGpt` class is used to initialize the ChatGPT library and wait for it to be ready. The `CreateClient` method is then called to create a new client using a specified configuration.
+
+Once the client is created, the `Ask` method can be called to send a message to ChatGPT and receive a response. The `conversationId` parameter is optional and can be used to specify the conversation that the message should be sent to. If no conversation ID is provided, a default conversation ID will be used.
+
+The `ResetConversation` method can be used to reset a specific conversation associated with a particular client. This allows the client to be used to start a new conversation with ChatGPT as if it were the first time the client was used.
+
+Multiple ChatGPT clients can be created and used to manage multiple accounts simultaneously. It is important to note that the `SessionToken` in the configuration must be a valid token in order to successfully authenticate and use the ChatGPT service.
 
 ## Note
 you need `Xvfb` to run it in linux server "without display", use the commands below to insstall it and configure a virtual display (Ubuntu Server)
