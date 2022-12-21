@@ -18,14 +18,14 @@ public class ChatGptClient
     public Func<string> GetCfClearance { get; set; }
     public Func<bool> GetReadyState { get; set; }
     public List<ChatGptConversation> Conversations { get; set; }
-    private Func<string, string, string, string, Task<Reply>> SendMessage { get; set; }
+    private Func<string, string, string, string, string, Task<Reply>> SendMessage { get; set; }
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true,
         WriteIndented = true
     };
     
-    public ChatGptClient(ChatGptClientConfig clientConfig, Func<string, string, string, string, Task<Reply>> SendMessageFunc, Func<string> getUserAgent, Func<string> getCfClearance, Func<bool> getReadyState)
+    public ChatGptClient(ChatGptClientConfig clientConfig, Func<string, string, string, string, string, Task<Reply>> SendMessageFunc, Func<string> getUserAgent, Func<string> getCfClearance, Func<bool> getReadyState)
     {
         AutoDeleteConversations = clientConfig.AutoDeleteConversations;
         AutoDeleteConversationsInterval = clientConfig.AutoDeleteConversationsInterval;
@@ -143,7 +143,7 @@ public class ChatGptClient
             Conversations.Add(conversation);
         }
 
-        var reply = await SendMessage(prompt, Guid.NewGuid().ToString(), conversation.ParentMessageId, AccessToken);
+        var reply = await SendMessage(prompt, Guid.NewGuid().ToString(), conversation.ParentMessageId, conversation.ConversationId, AccessToken);
 
         if(reply.ConversationId is not null)
         {
