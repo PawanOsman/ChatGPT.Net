@@ -2,10 +2,11 @@
 using System.Text.RegularExpressions;
 using ChatGPT.Net.DTO;
 using ChatGPT.Net.Enums;
+using ChatGPT.Net.Session;
 using Microsoft.Playwright;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace ChatGPT.Net.Session;
+namespace ChatGPT.Net;
 
 public class ChatGpt
 {

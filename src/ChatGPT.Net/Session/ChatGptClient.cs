@@ -33,7 +33,7 @@ public class ChatGptClient
         {
             new()
             {
-                ConversationId = "default",
+                Id = "default",
                 ParentMessageId = Guid.NewGuid().ToString()
             }
         };
@@ -72,7 +72,7 @@ public class ChatGptClient
         var response = await client.GetAsync("https://chat.openai.com/api/auth/session");
 
         response.EnsureSuccessStatusCode();
-        
+
         const string name = "__Secure-next-auth.session-token=";
         var cookies = response.Headers.GetValues("Set-Cookie");
         var sToken = cookies.FirstOrDefault(x => x.StartsWith(name));
@@ -84,7 +84,7 @@ public class ChatGptClient
         AccessToken = profile.AccessToken;
         ExpiresAt = profile.Expires;
     }
-    
+
     private async Task WaitForReady()
     {
         while (!GetReadyState()) await Task.Delay(25);
@@ -94,19 +94,19 @@ public class ChatGptClient
     {
         await WaitForReady();
 
-        var conversation = Conversations.FirstOrDefault(x => x.ConversationId == conversationId);
+        var conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
 
         if (conversation == null)
         {
             conversation = new ChatGptConversation()
             {
-                ConversationId = conversationId,
+                Id = conversationId,
                 ParentMessageId = Guid.NewGuid().ToString()
             };
             Conversations.Add(conversation);
         }
 
-        var reply = await SendMessage(prompt, conversation.ParentMessageId, conversation.ConversationId, AccessToken);
+        var reply = await SendMessage(prompt, Guid.NewGuid().ToString(), conversation.ParentMessageId, AccessToken);
 
         conversation.ConversationId = reply.ConversationId;
         conversation.ParentMessageId = reply.Message.Id;
@@ -116,7 +116,7 @@ public class ChatGptClient
 
     public void ResetConversation(string conversationId = "default")
     {
-        var conversation = Conversations.FirstOrDefault(x => x.ConversationId == conversationId);
+        var conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
         if (conversation == null) return;
         conversation.ConversationId = null;
         conversation.ParentMessageId = Guid.NewGuid().ToString();

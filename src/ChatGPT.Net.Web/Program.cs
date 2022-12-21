@@ -1,5 +1,5 @@
+using ChatGPT.Net;
 using ChatGPT.Net.DTO;
-using ChatGPT.Net.Session;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -25,8 +25,13 @@ app.MapGet("/chat", async (HttpRequest request) =>
             Response = "Query is empty"
         });
 
+    var id = "default";
+
+    if(request.Query.ContainsKey("id")) id = request.Query["id"];
+
     var query = request.Query["q"].ToString();
-    var response = await chatGptClient.Ask(query);
+    var response = await chatGptClient.Ask(query, id);
+
     return Results.Ok(new
     {
         Status = true,
