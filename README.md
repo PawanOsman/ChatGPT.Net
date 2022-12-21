@@ -1,7 +1,7 @@
 
 
 
-## ChatGPT.Net - Unoficial API client for ChatGPT
+## ChatGPT.Net - Unofficial API client for ChatGPT
 
 [![GitHub issues](https://img.shields.io/github/issues/pawanosman/ChatGPT.Net)](https://github.com/PawanOsman/ChatGPT.Net/issues)
 [![GitHub forks](https://img.shields.io/github/forks/pawanosman/ChatGPT.Net)](https://github.com/pawanosman/ChatGPT.Net/network)
