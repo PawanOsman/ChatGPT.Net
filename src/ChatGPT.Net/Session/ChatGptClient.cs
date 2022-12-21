@@ -1,4 +1,5 @@
-﻿using ChatGPT.Net.DTO;
+﻿using System.Net.Http.Headers;
+using ChatGPT.Net.DTO;
 using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -6,6 +7,9 @@ namespace ChatGPT.Net.Session;
 
 public class ChatGptClient
 {
+    public bool AutoDeleteConversations { get; set; }
+    public int AutoDeleteConversationsInterval { get; set; } = 300000;
+    public int DeleteConversationIfInactiveFor { get; set; } = -1;
     public string SessionToken { get; set; }
     public string AccessToken { get; set; }
     public DateTime ExpiresAt { get; set; }
@@ -23,6 +27,9 @@ public class ChatGptClient
     
     public ChatGptClient(ChatGptClientConfig clientConfig, Func<string, string, string, string, Task<Reply>> SendMessageFunc, Func<string> getUserAgent, Func<string> getCfClearance, Func<bool> getReadyState)
     {
+        AutoDeleteConversations = clientConfig.AutoDeleteConversations;
+        AutoDeleteConversationsInterval = clientConfig.AutoDeleteConversationsInterval;
+        DeleteConversationIfInactiveFor = clientConfig.DeleteConversationIfInactiveFor;
         SendMessage = SendMessageFunc;
         SessionToken = clientConfig.SessionToken;
         Account = clientConfig.Account;
@@ -37,6 +44,36 @@ public class ChatGptClient
                 ParentMessageId = Guid.NewGuid().ToString()
             }
         };
+
+        if (DeleteConversationIfInactiveFor != -1)
+        {
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    var conversations = Conversations.Where(x => DateTime.Now - x.Updated > TimeSpan.FromMilliseconds(DeleteConversationIfInactiveFor)).ToList();
+                    foreach (var conversation in conversations)
+                    {
+                        await DeleteConversationById(conversation.Id);
+                        await Task.Delay(1000);
+                    }
+                    await Task.Delay(DeleteConversationIfInactiveFor);
+                }
+            });
+        }
+
+        if (AutoDeleteConversations)
+        {
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    await DeleteAllConversations();
+                    await Task.Delay(AutoDeleteConversationsInterval);
+                }
+            });
+        }
+        
         Task.Run(async () =>
         {
             while (true)
@@ -108,8 +145,17 @@ public class ChatGptClient
 
         var reply = await SendMessage(prompt, Guid.NewGuid().ToString(), conversation.ParentMessageId, AccessToken);
 
-        conversation.ConversationId = reply.ConversationId;
-        conversation.ParentMessageId = reply.Message.Id;
+        if(reply.ConversationId is not null)
+        {
+            conversation.ConversationId = reply.ConversationId;
+        }
+
+        if(reply.Message.Id is not null)
+        {
+            conversation.ParentMessageId = reply.Message.Id;
+        }
+
+        conversation.Updated = DateTime.Now;
 
         return reply.Message.Content.Parts.FirstOrDefault();
     }
@@ -120,5 +166,86 @@ public class ChatGptClient
         if (conversation == null) return;
         conversation.ConversationId = null;
         conversation.ParentMessageId = Guid.NewGuid().ToString();
+    }
+
+    // Method by shêr#0196
+    public async Task DeleteAllConversations()
+    {
+        await WaitForReady();
+
+        Conversations = new List<ChatGptConversation>()
+        {
+            new()
+            {
+                Id = "default",
+                ParentMessageId = Guid.NewGuid().ToString()
+            }
+        };
+
+        var client = new HttpClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Delete, "https://chat.openai.com/backend-api/conversations");
+
+        request.Headers.Add("User-Agent", GetUserAgent());
+        request.Headers.Add("Accept", "*/*");
+        request.Headers.Add("Accept-Language", "en-US,en;q=0.5");
+        request.Headers.Add("Referer", "https://chat.openai.com/chat");
+        request.Headers.Add("Origin", "https://chat.openai.com");
+        request.Headers.Add("DNT", "1");
+        request.Headers.Add("Connection", "keep-alive");
+        request.Headers.Add("Cookie", $"cf_clearance={GetCfClearance()};");
+        request.Headers.Add("Sec-Fetch-Dest", "empty");
+        request.Headers.Add("Sec-Fetch-Mode", "no-cors");
+        request.Headers.Add("Sec-Fetch-Site", "same-origin");
+        request.Headers.Add("TE", "trailers");
+        request.Headers.Add("Authorization", $"Bearer {AccessToken}");
+        request.Headers.Add("Alt-Used", "chat.openai.com");
+        request.Headers.Add("Pragma", "no-cache");
+        request.Headers.Add("Cache-Control", "no-cache");
+
+        request.Content = new StringContent("{\"confirm\":\"true\"}");
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+        var response = await client.SendAsync(request);
+    }
+
+    // Method by shêr#0196
+    public async Task DeleteConversationById(string conversationId)
+    {
+        await WaitForReady();
+
+        var conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
+        
+        if(conversation is not null)
+        {
+            conversationId = conversation.ConversationId;
+            Conversations.Remove(conversation);
+        }
+        
+        var client = new HttpClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"https://chat.openai.com/backend-api/conversation/{conversationId}");
+
+        request.Headers.Add("User-Agent", GetUserAgent());
+        request.Headers.Add("Accept", "*/*");
+        request.Headers.Add("Accept-Language", "en-US,en;q=0.5");
+        request.Headers.Add("Referer", $"https://chat.openai.com/chat/{conversationId}");
+        request.Headers.Add("Origin", "https://chat.openai.com");
+        request.Headers.Add("DNT", "1");
+        request.Headers.Add("Connection", "keep-alive");
+        request.Headers.Add("Cookie", $"cf_clearance={GetCfClearance()};");
+        request.Headers.Add("Sec-Fetch-Dest", "empty");
+        request.Headers.Add("Sec-Fetch-Mode", "no-cors");
+        request.Headers.Add("Sec-Fetch-Site", "same-origin");
+        request.Headers.Add("TE", "trailers");
+        request.Headers.Add("Authorization", $"Bearer {AccessToken}");
+        request.Headers.Add("Alt-Used", "chat.openai.com");
+        request.Headers.Add("Pragma", "no-cache");
+        request.Headers.Add("Cache-Control", "no-cache");
+
+        request.Content = new StringContent("{\"confirm\":\"true\"}");
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+        var response = await client.SendAsync(request);
     }
 }

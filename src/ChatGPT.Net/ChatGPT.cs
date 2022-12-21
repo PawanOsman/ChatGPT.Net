@@ -4,15 +4,20 @@ using ChatGPT.Net.DTO;
 using ChatGPT.Net.Enums;
 using ChatGPT.Net.Session;
 using Microsoft.Playwright;
+using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace ChatGPT.Net;
 
 public class ChatGpt
 {
+    public List<ChatGptMessage> Messages { get; set; } = new();
+    public bool UseCache { get; set; } = true;
+    public bool SaveCache { get; set; } = true;
     public bool Ready { get; set; } = false;
     private string UserAgent { get; set; }
     private string CfClearance { get; set; }
+    private bool Invisible { get; set; }
     private bool Incognito { get; set; }
     private List<ChatGptClient> ChatGptClients { get; set; } = new();
     private IBrowserContext BrowserContext { get; set; }
@@ -31,6 +36,21 @@ public class ChatGpt
         config ??= new ChatGptConfig();
         DataDir = config.DataDir;
         Incognito = config.Incognito;
+        UseCache = config.UseCache;
+        SaveCache = config.SaveCache;                
+        if (SaveCache)
+        {
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    await WaitForReady();
+                    var json = JsonConvert.SerializeObject(Messages, Formatting.Indented);
+                    await File.WriteAllTextAsync("cache.json", json);
+                    await Task.Delay(30000);
+                }
+            });
+        }
         Init();
     }
 
@@ -48,21 +68,30 @@ public class ChatGpt
     {
         Task.Run(async () =>
         {
+            if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "cache.json")))
+            {
+                var fileContent = await File.ReadAllTextAsync(Path.Combine(Directory.GetCurrentDirectory(), "cache.json"));
+                Messages = JsonConvert.DeserializeObject<List<ChatGptMessage>>(fileContent) ?? new();
+            }
             var tries = 0;
             var playwright = await Playwright.CreateAsync();
             Console.WriteLine("Started getting CF Cookies...");
+            var browserArgs = new[]
+            {
+                "--no-sandbox",
+                "--disable-setuid-sandbox"
+            };
+
+            if(Invisible)
+                browserArgs = browserArgs.Append("--window-position=-4096,-4096").ToArray();
+
             if (Incognito)
             {
-                Browser = await playwright.Chromium.LaunchAsync(
-                    new BrowserTypeLaunchOptions()
-                    {
-                        Headless = false,
-                        Args = new[]
-                        {
-                            "--no-sandbox",
-                            "--disable-setuid-sandbox"
-                        }
-                    });
+                Browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions()
+                {
+                    Headless = false,
+                    Args = browserArgs
+                });
             }
             else
             {
@@ -70,11 +99,7 @@ public class ChatGpt
                     new BrowserTypeLaunchPersistentContextOptions
                     {
                         Headless = false,
-                        Args = new[]
-                        {
-                            "--no-sandbox",
-                            "--disable-setuid-sandbox"
-                        },
+                        Args = browserArgs,
                         ScreenSize = new ScreenSize
                         {
                             Height = 768,
@@ -190,6 +215,25 @@ public class ChatGpt
     
     private async Task<Reply> SendMessage(string message, string messageId, string parentMessageId, string authKey)
     {
+        if (UseCache)
+        {
+            if (Messages.Any(x => x.Question.ToLower() == message.ToLower()))
+            {
+                var messageObj = Messages.First(x => x.Question.ToLower() == message.ToLower());
+                return new Reply
+                {
+                    Message = new Message
+                    {
+                        Id = parentMessageId,
+                        Content = new Content
+                        {
+                            Parts = new []{messageObj.Answer}
+                        }
+                    }
+                };
+            }
+        }
+
         await WaitForReady();
         var fetchData = $"await sendMessage(\"{message}\", \"{messageId}\", \"{parentMessageId}\", \"{authKey}\")";
 
@@ -200,6 +244,15 @@ public class ChatGpt
 
         var reply = JsonSerializer.Deserialize<Reply>(data, _jsonSerializerOptions);
 
+        if (UseCache)
+        {
+            Messages.Add(new ChatGptMessage
+            {
+                Question = message,
+                Answer = reply?.Message.Content.Parts[0]
+            });
+        }
+        
         return reply;
     }
 
