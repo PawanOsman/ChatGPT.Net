@@ -1,5 +1,6 @@
 
 
+
 ## ChatGPT.Net - Unoficial API client for ChatGPT
 
 [![GitHub issues](https://img.shields.io/github/issues/pawanosman/ChatGPT.Net)](https://github.com/PawanOsman/ChatGPT.Net/issues)
@@ -27,12 +28,17 @@ Console.WriteLine(response);
 
 ## Features
 
--   Automatic login to ChatGPT using Microsoft accounts or SessionToken
--   Bypasses Cloudflare protection and fake rate limit protection
--   Saves cookies to allow the application to restart without requiring a login
--   Ability to reset conversations or create multiple conversations simultaneously
--   Automatic refresh of ChatGPT access token and Cloudflare cf_clearance cookie for uninterrupted use
--   Uses a single browser window/tab for managing and using multiple accounts, saving server resources when working with multiple accounts
+-   Automatic login to ChatGPT using Microsoft accounts or SessionToken.
+-   Bypass of Cloudflare protection and fake rate limit protection.
+-   Persistent cookie storage to allow for application restart without requiring login.
+-   Functionality to reset conversations or create multiple conversations simultaneously.
+-   Automatic refresh of ChatGPT access token and Cloudflare cf_clearance cookie for uninterrupted use.
+-   Efficient use of server resources through the use of a single browser window/tab for managing and using multiple accounts in the same time.
+-   Cache system enabled by default, with cached data saved to cache.json to reduce requests to ChatGPT endpoint and reduce rate limiting.
+-   Ability to delete all conversations created by the user's account or a specific conversation by its ID.
+-   Automatic deletion of all conversations at a specified interval.
+-   Automatic deletion of inactive conversations.
+
 
 ## To-Do List:
 
@@ -60,7 +66,10 @@ Here is a sample code showing how to use ChatGPT.Net:
 ```csharp
 using ChatGPT.Net;
 
-var chatGpt = new ChatGpt();
+var chatGpt = new ChatGpt(new ChatGptConfig  
+{  
+  Invisible = true  
+});
 await chatGpt.WaitForReady();
 var chatGptClient = await chatGpt.CreateClient(new ChatGptClientConfig
 {
@@ -90,6 +99,50 @@ Once the client is created, the `Ask` method can be called to send a message to 
 The `ResetConversation` method can be used to reset a specific conversation associated with a particular client. This allows the client to be used to start a new conversation with ChatGPT as if it were the first time the client was used.
 
 Multiple ChatGPT clients can be created and used to manage multiple accounts simultaneously. It is important to note that the `SessionToken` in the configuration must be a valid token in order to successfully authenticate and use the ChatGPT service.
+
+## Documentation for the `ChatGptConfig` class:
+
+### Properties
+
+#### `UseCache` (bool)
+
+If `true`, the client will check for a cache of responses before generating a new one. If `false`, the client will always generate a new response.
+
+#### `SaveCache` (bool)
+
+If `true`, the client will save responses to a cache file (`cache.json`) in the working directory after generating them. If `false`, the client will not save responses to the cache.
+
+#### `Invisible` (bool)
+
+If `true`, the client 's Chrome browser window will start out of screen to hide it from view. If `false`, the client 's Chrome browser window will be visible.
+
+#### `Incognito` (bool)
+
+If `true`, the browser will start in incognito mode. If `false`, the browser will start as normal.
+
+## Documentation for the `ChatGptClientConfig` class:
+
+### Properties
+
+#### `AutoDeleteConversations` (bool)
+
+If `true`, the client will automatically delete all conversations automatically every `AutoDeleteConversationsInterval` milliseconds.
+
+#### `AutoDeleteConversationsInterval` (int)
+
+This property specifies the interval (in milliseconds) which the client will delete all conversations automatically. This property is only used if `AutoDeleteConversations` is `true`. The default value is `300000` (5 minutes).
+
+#### `DeleteConversationIfInactiveFor` (int)
+
+This property specifies the amount of time (in milliseconds) that a conversation must be inactive before it is deleted. This property is only used if `AutoDeleteConversations` is `true`. If the value is set to `-1`, the client will not delete any conversations. The default value is `-1`.
+
+#### `SessionToken` (string)
+
+This property specifies the session token for the ChatGPT account.
+
+#### `Account` (Account)
+
+This property specifies the account that the ChatGPT client.
 
 ## Note
 you need `Xvfb` to run it in linux server "without display", use the commands below to insstall it and configure a virtual display (Ubuntu Server)
