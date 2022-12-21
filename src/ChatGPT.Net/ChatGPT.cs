@@ -36,6 +36,7 @@ public class ChatGpt
         config ??= new ChatGptConfig();
         DataDir = config.DataDir;
         Incognito = config.Incognito;
+        Invisible = config.Invisible;
         UseCache = config.UseCache;
         SaveCache = config.SaveCache;                
         if (SaveCache)
@@ -284,24 +285,25 @@ public class ChatGpt
                 
                 chatGptClient.SessionToken = cookie.Value;
                 await chatGptClient.RefreshAccessToken();
+                Console.WriteLine("Successfully logged in!");
             }
             else
             {
-                await Page.Context.ClearCookiesAsync();
-                await Page.Context.AddCookiesAsync(new List<Cookie>
-                {
-                    new()
-                    {
-                        Name = "cf_clearance",
-                        Value = CfClearance,
-                        Domain = ".chat.openai.com",
-                        Path = "/",
-                        Expires = -1,
-                        HttpOnly = true,
-                        Secure = true,
-                        SameSite = SameSiteAttribute.None
-                    }
-                });
+                // await Page.Context.ClearCookiesAsync();
+                // await Page.Context.AddCookiesAsync(new List<Cookie>
+                // {
+                //     new()
+                //     {
+                //         Name = "cf_clearance",
+                //         Value = CfClearance,
+                //         Domain = ".chat.openai.com",
+                //         Path = "/",
+                //         Expires = -1,
+                //         HttpOnly = true,
+                //         Secure = true,
+                //         SameSite = SameSiteAttribute.None
+
+                //     }
                 switch (config.Account.Type)
                 {
                     case AccountType.Email:
@@ -312,26 +314,39 @@ public class ChatGpt
                     case AccountType.Microsoft:
                         await Page.GotoAsync("https://chat.openai.com/auth/login");
                         var inCapacity = true;
+                        var capacityTries = 0;
+                        Console.WriteLine("Checking if in capacity...");
                         while (inCapacity)
                         {
                             var pageContent = await Page.ContentAsync();
                             inCapacity = pageContent.ToLower().Contains("capacity");
+                            if (!inCapacity) continue;
+                            Console.WriteLine($"ChatGPT is in capacity. Waiting for it to be available...{capacityTries}");
                             await Task.Delay(3000);
                             await Page.GotoAsync("https://chat.openai.com/auth/login");
+                            capacityTries++;
                         }
-                        await Task.Delay(1500);
+                        Console.WriteLine("ChatGPT Available now!");
+                        Console.WriteLine("Logging in...");
+                        await Task.Delay(500);
                         await Page.GetByRole(AriaRole.Button, new() { NameString = "Log in" }).ClickAsync();
-                        await Task.Delay(1500);
+                        await Task.Delay(500);
                         await Page.GetByRole(AriaRole.Button,
                             new() { NameString = "Continue with Microsoft Account" }).ClickAsync();
-                        await Task.Delay(1500);
+                        await Task.Delay(500);
 
                         try
                         {
+                            var element = await Page.QuerySelectorAsync("#i0116");
+                            if (element is null)
+                            {
+                                await Page.GetByRole(AriaRole.Link, new() { NameString = "Sign in with a different Microsoft account" }).ClickAsync();
+                                await Task.Delay(500);
+                            }
                             await Page.GetByPlaceholder("Email, phone, or Skype").ClickAsync();
-                            await Task.Delay(1500);
+                            await Task.Delay(500);
                             await Page.GetByPlaceholder("Email, phone, or Skype").FillAsync(config.Account.Email);
-                            await Task.Delay(1500);
+                            await Task.Delay(500);
                             await Page.GetByRole(AriaRole.Button, new() { NameString = "Next" }).ClickAsync();
                         }
                         catch
@@ -339,29 +354,28 @@ public class ChatGpt
                             // ignore
                         }
 
-                        await Task.Delay(1500);
-                        await Page.GetByPlaceholder("Password").ClickAsync();
-                        await Task.Delay(1500);
-                        await Page.GetByPlaceholder("Password").FillAsync(config.Account.Password);
-                        await Task.Delay(1500);
-                        await Page.GetByRole(AriaRole.Button, new() { NameString = "Sign in" }).ClickAsync();
-                        
-                    // {
-                    //     await Page.WaitForSelectorAsync(".displaySign");
-                    //     var code = await (await Page.QuerySelectorAsync("#idRemoteNGC_DisplaySign")).InnerTextAsync();
-                    //     Console.WriteLine($"Verification Code is: {code}");
-                    // }
+                        await Task.Delay(1000);
+                        var elementVerificationCode = await Page.QuerySelectorAsync(".displaySign");
+                        if (elementVerificationCode is not null)
+                        {
+                            var code = await (await Page.QuerySelectorAsync("#idRemoteNGC_DisplaySign")).InnerTextAsync();
+                            Console.WriteLine($"Verification Code is: {code}");
+                            Console.WriteLine($"Please approve the login request in 5 Seconds.");
+                            await Task.Delay(5000);
+                        }
+                        else
+                        {
+                            await Page.GetByPlaceholder("Password").ClickAsync();
+                            await Task.Delay(500);
+                            await Page.GetByPlaceholder("Password").FillAsync(config.Account.Password);
+                            await Task.Delay(500);
+                            await Page.GetByRole(AriaRole.Button, new() { NameString = "Sign in" }).ClickAsync();
+                        }
 
                         try
                         {
                             await Task.Delay(500);
                             await Page.GetByRole(AriaRole.Button, new() { NameString = "Yes" }).ClickAsync();
-                            await Task.Delay(500);
-                            await Page.GetByRole(AriaRole.Button, new() { NameString = "Next" }).ClickAsync();
-                            await Task.Delay(500);
-                            await Page.GetByRole(AriaRole.Button, new() { NameString = "Next" }).ClickAsync();
-                            await Task.Delay(500);
-                            await Page.GetByRole(AriaRole.Button, new() { NameString = "Done" }).ClickAsync();
                             await Task.Delay(500);
                         }
                         catch
@@ -371,16 +385,20 @@ public class ChatGpt
 
                         cookiesData = await Page.Context.CookiesAsync();
                         var cookie = cookiesData.FirstOrDefault(x => x.Name == "__Secure-next-auth.session-token");
-                        
+
                         if (cookie is null)
                         {
                             throw new Exception("Could not find session token cookie.");
                         }
-                
+
                         chatGptClient.SessionToken = cookie.Value;
                         await chatGptClient.RefreshAccessToken();
+                        Console.WriteLine("Successfully logged in!");
                         break;
                 }
+
+
+                // });
             }
             await Page.GotoAsync("https://chat.openai.com");
         }
