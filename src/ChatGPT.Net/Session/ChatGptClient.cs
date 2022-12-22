@@ -168,7 +168,7 @@ public class ChatGptClient
         conversation.ParentMessageId = Guid.NewGuid().ToString();
     }
 
-    // Method by shêr#0196
+    // Method by shêr#0196 https://github.com/optionsx
     public async Task DeleteAllConversations()
     {
         await WaitForReady();
@@ -209,7 +209,7 @@ public class ChatGptClient
         var response = await client.SendAsync(request);
     }
 
-    // Method by shêr#0196
+    // Method by shêr#0196 https://github.com/optionsx
     public async Task DeleteConversationById(string conversationId)
     {
         await WaitForReady();
