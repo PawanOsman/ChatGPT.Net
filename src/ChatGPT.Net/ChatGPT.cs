@@ -236,7 +236,7 @@ public class ChatGpt
         }
 
         await WaitForReady();
-        var fetchData = string.IsNullOrWhiteSpace(conversationId) ? $"await sendMessage(\"{message}\", \"{messageId}\", \"{parentMessageId}\", \"{authKey}\")" : $"await sendMessageByConversation(\"{message}\", \"{messageId}\", \"{parentMessageId}\", \"{authKey}\", \"{conversationId}\")";
+        var fetchData = string.IsNullOrWhiteSpace(conversationId) ? $"await sendMessage(`{message}`, `{messageId}`, `{parentMessageId}`, `{authKey}`)" : $"await sendMessageByConversation(`{message}`, `{messageId}`, `{parentMessageId}`, `{authKey}`, `{conversationId}`)";
 
         var response = await Page.EvaluateAsync<string>($"async () => {fetchData}");
 
