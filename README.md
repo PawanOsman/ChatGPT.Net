@@ -10,6 +10,7 @@
 <a href="https://www.nuget.org/packages/ChatGPT.Net">
     <img alt="logo" src="https://badge.fury.io/nu/ChatGPT.Net.svg">
 </a>
+<a href="https://discord.pawan.krd"><img src="https://img.shields.io/discord/1055397662976905229?color=5865F2&logo=discord&logoColor=white" alt="Discord server"/></a>
 
 The ChatGPT.Net Unofficial .Net API for ChatGPT is a C# library that allows developers to access ChatGPT, a chat-based language model. With this API, developers can send queries to ChatGPT and receive responses in real-time, making it easy to integrate ChatGPT into their own applications.
 
