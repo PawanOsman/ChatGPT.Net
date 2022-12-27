@@ -1,4 +1,7 @@
-
+# A new update is in progress, blazing fast ChatGPT Client that powered by 3 Servers
+# 4 Gbps Network and 24 Gb of ram
+# tottally without using browser and bypass everything with the same implementation NO Breakchange 😁😅
+# join discord if you have any question
 
 
 ## ChatGPT.Net - Unofficial API client for ChatGPT
