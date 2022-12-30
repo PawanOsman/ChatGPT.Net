@@ -4,7 +4,7 @@
         <TargetFramework>net7.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <ApplicationIcon>artificial-intelligence.png</ApplicationIcon>
+        <ApplicationIcon>artificial-intelligence.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
