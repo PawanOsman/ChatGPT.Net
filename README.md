@@ -3,14 +3,12 @@
 
 ## ChatGPT.Net - Unofficial API client for ChatGPT [[Discord](https://discord.pawan.krd)]
 
+[![Nuget Package](https://badge.fury.io/nu/ChatGPT.Net.svg)](https://www.nuget.org/packages/ChatGPT.Net)
 [![GitHub issues](https://img.shields.io/github/issues/pawanosman/ChatGPT.Net)](https://github.com/PawanOsman/ChatGPT.Net/issues)
 [![GitHub forks](https://img.shields.io/github/forks/pawanosman/ChatGPT.Net)](https://github.com/pawanosman/ChatGPT.Net/network)
 [![GitHub stars](https://img.shields.io/github/stars/pawanosman/ChatGPT.Net)](https://github.com/pawanosman/ChatGPT.Net/stargazers)
 [![GitHub license](https://img.shields.io/github/license/pawanosman/ChatGPT.Net)](https://github.com/pawanosman/ChatGPT.Net)
-<a href="https://www.nuget.org/packages/ChatGPT.Net">
-    <img alt="logo" src="https://badge.fury.io/nu/ChatGPT.Net.svg">
-</a>
-<a href="https://discord.pawan.krd"><img src="https://img.shields.io/discord/1055397662976905229?color=5865F2&logo=discord&logoColor=white" alt="Discord server"/></a>
+[![Discord server](https://img.shields.io/discord/1055397662976905229?color=5865F2&logo=discord&logoColor=white)](https://discord.pawan.krd)
 
 The ChatGPT.Net Unofficial .Net API for ChatGPT is a C# library that allows developers to access ChatGPT, a chat-based language model. With this API, developers can send queries to ChatGPT and receive responses in real-time, making it easy to integrate ChatGPT into their own applications.
 
