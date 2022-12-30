@@ -38,7 +38,7 @@ app.MapGet("/chat", async (HttpRequest request) =>
     if(request.Query.ContainsKey("id")) id = request.Query["id"];
 
     var query = request.Query["q"].ToString();
-    var response = await chatGptClient.Ask(query, id);
+    var response = await chatGptClient.Ask(query, id ?? "default");
 
     return Results.Ok(new
     {
