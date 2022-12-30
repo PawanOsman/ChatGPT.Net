@@ -1,10 +1,7 @@
-# A new update is in progress, blazing fast ChatGPT Client that powered by 3 Servers
-# 4 Gbps Network and 24 Gb of ram
-# tottally without using browser and bypass everything with the same implementation NO Breakchange 😁😅
-# join discord if you have any question
+# Update 30-DEC-2022
+## We have introduced a new method that utilizes a socket for faster performance without the need for a browser anymore. [[NodeJS Version](https://github.com/PawanOsman/chatgpt-io)]
 
-
-## ChatGPT.Net - Unofficial API client for ChatGPT
+## ChatGPT.Net - Unofficial API client for ChatGPT [[Discord](https://discord.pawan.krd)]
 
 [![GitHub issues](https://img.shields.io/github/issues/pawanosman/ChatGPT.Net)](https://github.com/PawanOsman/ChatGPT.Net/issues)
 [![GitHub forks](https://img.shields.io/github/forks/pawanosman/ChatGPT.Net)](https://github.com/pawanosman/ChatGPT.Net/network)
@@ -31,18 +28,22 @@ Console.WriteLine(response);
 ```
 
 ## Features
-
--   Automatic login to ChatGPT using Microsoft accounts or SessionToken.
+-   New method without using a browser.
+-   Automatic login to ChatGPT using SessionToken (or Microsoft accounts when `BrowserMode` is `true`).
 -   Bypass of Cloudflare protection and fake rate limit protection.
--   Persistent cookie storage to allow for application restart without requiring login.
+-   Persistent cookie storage to allow for application restart without requiring login [`BrowserMode`].
 -   Functionality to reset conversations or create multiple conversations simultaneously.
--   Automatic refresh of ChatGPT access token and Cloudflare cf_clearance cookie for uninterrupted use.
--   Efficient use of server resources through the use of a single browser window/tab for managing and using multiple accounts in the same time.
+-   Automatic refresh of ChatGPT access token.
+-   Automatic refresh of Cloudflare cf_clearance cookie for uninterrupted [`BrowserMode`].
+-   Efficient use of server resources through the use of a single browser window/tab for managing and using multiple accounts in the same time [`BrowserMode`].
 -   Cache system enabled by default, with cached data saved to cache.json to reduce requests to ChatGPT endpoint and reduce rate limiting.
--   Ability to delete all conversations created by the user's account or a specific conversation by its ID.
--   Automatic deletion of all conversations at a specified interval.
--   Automatic deletion of inactive conversations.
+-   Ability to delete all conversations created by the user's account or a specific conversation by its ID [`BrowserMode`].
+-   Automatic deletion of all conversations at a specified interval [`BrowserMode`].
+-   Automatic deletion of inactive conversations [`BrowserMode`].
+##### [`BrowserMode`] = This feature is only available in the old browser method!
 
+## How the new method working without a browser?
+The new method operates without a browser by utilizing a server that has implemented bypass methods to function as a proxy. The library sends requests to the server, which then redirects the request to ChatGPT while bypassing Cloudflare and other bot detection measures. The server then returns the ChatGPT response, ensuring that the method remains effective even if ChatGPT implements changes to prevent bot usage. Our servers are continuously updated to maintain their bypass capabilities.
 
 ## To-Do List:
 
@@ -124,6 +125,10 @@ If `true`, the client 's Chrome browser window will start out of screen to hide 
 
 If `true`, the browser will start in incognito mode. If `false`, the browser will start as normal.
 
+#### `BrowserMode` (bool)
+
+If `true`, it will switch back to the old browser method.
+
 ## Documentation for the `ChatGptClientConfig` class:
 
 ### Properties
@@ -148,7 +153,7 @@ This property specifies the session token for the ChatGPT account.
 
 This property specifies the account that the ChatGPT client.
 
-## Note
+## Note [`BrowserMode` only]
 you need `Xvfb` to run it in linux server "without display", use the commands below to insstall it and configure a virtual display (Ubuntu Server)
 
 1. install using this command
@@ -166,7 +171,7 @@ Xvfb :99 -screen 0 1280x1024x24 &
 export DISPLAY=:99; ./ChatGPT.Net'
 ```
 
-## Troubleshooting
+## Troubleshooting [`BrowserMode` only]
 
 If you run your project and it freezes without the headless browser opening, it is likely that you have not installed Chromium and other WebKit tools required to run the browser. These tools are used by Playwright to control the headless browser, and must be installed in order to properly run the project.
 
@@ -188,3 +193,4 @@ This command will install all necessary browsers and tools for Playwright to pro
 ## Projects
 1. ChatGPT Unofficial free API without Authentication [Click Here](https://github.com/PawanOsman/ChatGPT)
 2. Talk with ChatGPT with +130 Languages [Website] [Click Here](https://chat.pawan.krd)
+
