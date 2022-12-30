@@ -25,6 +25,7 @@
       <PackageReference Include="Microsoft.Net.Http.Headers" Version="2.2.8" />
       <PackageReference Include="Microsoft.Playwright" Version="1.28.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+      <PackageReference Include="SocketIOClient" Version="3.0.7" />
     </ItemGroup>
 
     <ItemGroup>
