@@ -5,7 +5,7 @@ using ChatGPT.Net.Enums;
 using ChatGPT.Net.Session;
 using Microsoft.Playwright;
 using Newtonsoft.Json;
-using JsonSerializer = System.Text.Json.JsonSerializer;
+using SocketIOClient;
 
 namespace ChatGPT.Net;
 
@@ -14,11 +14,14 @@ public class ChatGpt
     public List<ChatGptMessage> Messages { get; set; } = new();
     public bool UseCache { get; set; } = true;
     public bool SaveCache { get; set; } = true;
-    public bool Ready { get; set; } = false;
+    private bool Ready { get; set; } = false;
     private string UserAgent { get; set; }
     private string CfClearance { get; set; }
+    private string BypassNode { get; set; }
     private bool Invisible { get; set; }
     private bool Incognito { get; set; }
+    private bool BrowserMode { get; set; }
+    private SocketIO Socket { get; set; }
     private List<ChatGptClient> ChatGptClients { get; set; } = new();
     private IBrowserContext BrowserContext { get; set; }
     private IBrowser Browser { get; set; }
@@ -38,7 +41,9 @@ public class ChatGpt
         Incognito = config.Incognito;
         Invisible = config.Invisible;
         UseCache = config.UseCache;
-        SaveCache = config.SaveCache;                
+        SaveCache = config.SaveCache;
+        BrowserMode = config.BrowserMode;
+        BypassNode = config.BypassNode;
         if (SaveCache)
         {
             Task.Run(async () =>
@@ -52,7 +57,10 @@ public class ChatGpt
                 }
             });
         }
-        Init();
+
+        if (BrowserMode) InitBrowser();
+        else Task.Run(Init);
+
     }
 
     public async Task WaitForReady()
@@ -65,7 +73,42 @@ public class ChatGpt
         return Ready;
     }
 
-    private void Init()
+    public SocketIO GetSocketConnection()
+    {
+        return Socket;
+    }
+
+    private async Task Init()
+    {
+        Ready = false;
+        Socket = new SocketIO(BypassNode);
+
+        Socket.OnConnected += async (sender, e) =>
+        {
+            Console.WriteLine("Connected to the Bypass Node!");
+            Ready = true;
+        };
+
+        Socket.OnDisconnected += async (sender, e) =>
+        {
+            Console.WriteLine("Disconnected from the Bypass Node! Reconnecting...");
+            await Task.Delay(1500);
+            Task.Run(Init);
+        };
+
+        try
+        {
+            await Socket.ConnectAsync();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Connection failed! Reconnecting...");
+            await Task.Delay(1500);
+            Task.Run(Init);
+        }
+    }
+
+    private void InitBrowser()
     {
         Task.Run(async () =>
         {
@@ -259,9 +302,11 @@ public class ChatGpt
 
     public async Task<ChatGptClient> CreateClient(ChatGptClientConfig config)
     {
-        var chatGptClient = new ChatGptClient(config, SendMessage, GetUserAgent, GetCfClearance, GetReadyState);
+        var chatGptClient = new ChatGptClient(BrowserMode, config, SendMessage, GetUserAgent, GetCfClearance, GetReadyState, GetSocketConnection);
         if (string.IsNullOrWhiteSpace(config.SessionToken) && config.Account is null)
         {
+            if(!BrowserMode)
+                throw new Exception("You need to provide a session token.");
             throw new Exception("You need to provide either a session token or an account.");
         }
 
@@ -271,6 +316,9 @@ public class ChatGpt
         }
         else
         {
+            if(!BrowserMode)
+                throw new Exception("You can't use an account in Bypass server mode, please enable BrowserMode to use account for login.");
+
             var cookiesData = await Page.Context.CookiesAsync();
 
             var loggedIn = cookiesData.Any(x => x.Name == "__Secure-next-auth.session-token");
@@ -289,21 +337,6 @@ public class ChatGpt
             }
             else
             {
-                // await Page.Context.ClearCookiesAsync();
-                // await Page.Context.AddCookiesAsync(new List<Cookie>
-                // {
-                //     new()
-                //     {
-                //         Name = "cf_clearance",
-                //         Value = CfClearance,
-                //         Domain = ".chat.openai.com",
-                //         Path = "/",
-                //         Expires = -1,
-                //         HttpOnly = true,
-                //         Secure = true,
-                //         SameSite = SameSiteAttribute.None
-
-                //     }
                 switch (config.Account.Type)
                 {
                     case AccountType.Email:
@@ -396,9 +429,6 @@ public class ChatGpt
                         Console.WriteLine("Successfully logged in!");
                         break;
                 }
-
-
-                // });
             }
             await Page.GotoAsync("https://chat.openai.com");
         }
