@@ -1,17 +1,25 @@
 using ChatGPT.Net;
 using ChatGPT.Net.DTO;
+using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
-var chatGpt = new ChatGpt();
-await chatGpt.WaitForReady();
-var chatGptClient = await chatGpt.CreateClient(new ChatGptClientConfig
+var clientConfigString = await File.ReadAllTextAsync(Path.Combine(Directory.GetCurrentDirectory(), "config.json"));
+var clientConfig = JsonConvert.DeserializeObject<ChatGptClientConfig>(clientConfigString);
+
+if (clientConfig is null) throw new Exception("Config is empty or incorrect");
+
+var chatGpt = new ChatGpt(new ChatGptConfig
 {
-    SessionToken = "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0...."
+    UseCache = false
 });
 
-app.MapGet("/", async (HttpRequest request) => Results.Ok(new
+await chatGpt.WaitForReady();
+
+var chatGptClient = await chatGpt.CreateClient(clientConfig);
+
+app.MapGet("/", () => Results.Ok(new
 {
     Status = true
 }));
