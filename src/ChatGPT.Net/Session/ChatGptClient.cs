@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json.Nodes;
 using ChatGPT.Net.DTO;
 using Newtonsoft.Json;
 using SocketIOClient;
@@ -171,8 +170,8 @@ public class ChatGptClient
             var base64Url = AccessToken.Split('.')[1];
             var base64 = $"{base64Url.Replace('-', '+').Replace('_', '/')}==";
             var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64));
-            var parsed = JsonConvert.DeserializeObject<dynamic>(json);
-            AccessTokenExpiresAt = DateTimeOffset.FromUnixTimeSeconds((long)parsed.exp);
+            var parsed = JsonConvert.DeserializeObject<OpenAiProfile>(json);
+            AccessTokenExpiresAt = DateTimeOffset.FromUnixTimeSeconds(parsed.Expires);
         }
         return AccessTokenExpiresAt > DateTimeOffset.UtcNow.AddDays(-1);
     }
@@ -264,7 +263,7 @@ public class ChatGptClient
 
         var client = new HttpClient();
 
-        var request = new HttpRequestMessage(HttpMethod.Patch, "https://chat.openai.com/backend-api/conversations");
+        var request = new HttpRequestMessage(new HttpMethod("PATCH"), "https://chat.openai.com/backend-api/conversations");
 
         request.Headers.Add("User-Agent", GetUserAgent());
         request.Headers.Add("Accept", "*/*");
@@ -307,7 +306,7 @@ public class ChatGptClient
         
         var client = new HttpClient();
 
-        var request = new HttpRequestMessage(HttpMethod.Patch, $"https://chat.openai.com/backend-api/conversation/{conversationId}");
+        var request = new HttpRequestMessage(new HttpMethod("PATCH"), $"https://chat.openai.com/backend-api/conversation/{conversationId}");
 
         request.Headers.Add("User-Agent", GetUserAgent());
         request.Headers.Add("Accept", "*/*");
