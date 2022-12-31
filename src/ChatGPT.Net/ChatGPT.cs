@@ -282,22 +282,25 @@ public class ChatGpt
         var fetchData = string.IsNullOrWhiteSpace(conversationId) ? $"await sendMessage(`{message}`, `{messageId}`, `{parentMessageId}`, `{authKey}`)" : $"await sendMessageByConversation(`{message}`, `{messageId}`, `{parentMessageId}`, `{authKey}`, `{conversationId}`)";
 
         var response = await Page.EvaluateAsync<string>($"async () => {fetchData}");
+        
+        var data = response.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault(x => !x.Contains("data: [DONE]"))?.Substring(5);
+        
+        if (string.IsNullOrWhiteSpace(data))
+            throw new Exception("No data returned from OpenAI.");
 
-        var data = response.Split("\n")?.ToList().Where(x => !string.IsNullOrEmpty(x) && !x.Contains("data: [DONE]"))
-            .LastOrDefault()?.Substring(5);
-
-        var reply = JsonConvert.DeserializeObject<Reply>(data);
+        var reply = JsonConvert.DeserializeObject<Reply>(data!);
 
         if (UseCache)
         {
             Messages.Add(new ChatGptMessage
             {
                 Question = message,
-                Answer = reply?.Message.Content.Parts[0]
+                Answer = reply?.Message?.Content.Parts[0] ?? string.Empty
             });
         }
-        
-        return reply;
+
+        if (reply is not null) return reply;
+        throw new Exception("No reply returned from OpenAI.");
     }
 
     public async Task<ChatGptClient> CreateClient(ChatGptClientConfig config)
