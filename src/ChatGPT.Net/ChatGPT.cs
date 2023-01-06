@@ -78,6 +78,9 @@ public class ChatGpt
         return Socket;
     }
 
+    private int reconnectionAttempts = 0;
+    private const int MAX_RECONNECTION_ATTEMPTS = 5;
+
     private async Task Init()
     {
         Ready = false;
@@ -87,13 +90,23 @@ public class ChatGpt
         {
             Console.WriteLine("Connected to the Bypass Node!");
             Ready = true;
+            reconnectionAttempts = 0;
         };
 
         Socket.OnDisconnected += async (sender, e) =>
         {
             Console.WriteLine("Disconnected from the Bypass Node! Reconnecting...");
-            await Task.Delay(1500);
-            Task.Run(Init);
+
+            if (reconnectionAttempts < MAX_RECONNECTION_ATTEMPTS)
+            {
+                reconnectionAttempts++;
+                await Task.Delay(5000);
+                await Init();
+            }
+            else
+            {
+                Console.WriteLine("Failed to reconnect after {0} attempts", MAX_RECONNECTION_ATTEMPTS);
+            }
         };
 
         try
@@ -103,11 +116,20 @@ public class ChatGpt
         catch (Exception e)
         {
             Console.WriteLine("Connection failed! Reconnecting...");
-            await Task.Delay(1500);
-            Task.Run(Init);
+
+            if (reconnectionAttempts < MAX_RECONNECTION_ATTEMPTS)
+            {
+                reconnectionAttempts++;
+                await Task.Delay(5000);
+                await Init();
+            }
+            else
+            {
+                Console.WriteLine("Failed to reconnect after {0} attempts", MAX_RECONNECTION_ATTEMPTS);
+            }
         }
     }
-
+    
     private void InitBrowser()
     {
         Task.Run(async () =>
