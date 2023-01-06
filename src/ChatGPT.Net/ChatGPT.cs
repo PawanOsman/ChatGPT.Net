@@ -84,7 +84,14 @@ public class ChatGpt
     private async Task Init()
     {
         Ready = false;
-        Socket = new SocketIO(BypassNode);
+        Socket = new SocketIO(BypassNode, new SocketIOOptions
+        {
+            Query = new []
+            {
+                new KeyValuePair<string, string>("client", "csharp"),
+                new KeyValuePair<string, string>("version", "1.1.1")
+            }
+        });
 
         Socket.OnConnected += async (sender, e) =>
         {
@@ -109,6 +116,8 @@ public class ChatGpt
             }
         };
 
+        Socket.On("serverMessage", Console.WriteLine);
+
         try
         {
             await Socket.ConnectAsync();
@@ -129,7 +138,7 @@ public class ChatGpt
             }
         }
     }
-    
+
     private void InitBrowser()
     {
         Task.Run(async () =>
