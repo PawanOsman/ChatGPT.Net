@@ -93,7 +93,7 @@ public class ChatGpt
             }
         });
 
-        Socket.OnConnected += async (sender, e) =>
+        Socket.OnConnected += (sender, e) =>
         {
             Console.WriteLine("Connected to the Bypass Node!");
             Ready = true;
