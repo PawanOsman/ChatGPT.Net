@@ -78,63 +78,90 @@ public class ChatGpt
         return Socket;
     }
 
-    private int reconnectionAttempts = 0;
-    private const int MAX_RECONNECTION_ATTEMPTS = 5;
-
     private async Task Init()
     {
         Ready = false;
+        var firstConnection = true;
         Socket = new SocketIO(BypassNode, new SocketIOOptions
         {
+            Reconnection = false,
             Query = new []
             {
                 new KeyValuePair<string, string>("client", "csharp"),
-                new KeyValuePair<string, string>("version", "1.1.1")
+                new KeyValuePair<string, string>("version", "1.1.2"),
+                new KeyValuePair<string, string>("versionCode", "112"),
             }
         });
 
         Socket.OnConnected += (sender, e) =>
         {
-            Console.WriteLine("Connected to the Bypass Node!");
+            if(firstConnection) Console.WriteLine("Connected to the Bypass Node!");
+            firstConnection = false;
             Ready = true;
-            reconnectionAttempts = 0;
+        };
+        
+        Socket.OnReconnected += (sender, e) =>
+        {
+            Console.WriteLine("Reconnected to the Bypass Node!");
+            Ready = true;
+        };
+        
+        Socket.OnError += (sender, e) =>
+        {
+            Console.WriteLine($"Error: {e}");
+        };
+
+        Socket.OnReconnectAttempt += (sender, e) =>
+        {
+            Console.WriteLine($"Reconnecting...");
+        };
+        
+        Socket.OnReconnectError += (sender, e) =>
+        {
+            Console.WriteLine($"Reconnection Error: {e}");
+        };
+
+        Socket.OnReconnectFailed += (sender, e) =>
+        {
+            Console.WriteLine($"Reconnection Failed!");
         };
 
         Socket.OnDisconnected += async (sender, e) =>
         {
+            Ready = false;
             Console.WriteLine("Disconnected from the Bypass Node! Reconnecting...");
-
-            if (reconnectionAttempts < MAX_RECONNECTION_ATTEMPTS)
+            while (true)
             {
-                reconnectionAttempts++;
-                await Task.Delay(5000);
-                await Init();
-            }
-            else
-            {
-                Console.WriteLine("Failed to reconnect after {0} attempts", MAX_RECONNECTION_ATTEMPTS);
+                try
+                {
+                    await Socket.ConnectAsync();
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Ready = false;
+                    Console.WriteLine($"CacheException caught: {ex.Message}");
+                    Console.WriteLine("Retrying in 10 second...");
+                    await Task.Delay(5000);
+                }
             }
         };
 
         Socket.On("serverMessage", Console.WriteLine);
 
-        try
+        while (true)
         {
-            await Socket.ConnectAsync();
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine("Connection failed! Reconnecting...");
-
-            if (reconnectionAttempts < MAX_RECONNECTION_ATTEMPTS)
+            try
             {
-                reconnectionAttempts++;
-                await Task.Delay(5000);
-                await Init();
+                await Socket.ConnectAsync();
+                break;
             }
-            else
+            catch (Exception e)
             {
-                Console.WriteLine("Failed to reconnect after {0} attempts", MAX_RECONNECTION_ATTEMPTS);
+                Ready = false;
+                Console.WriteLine($"CacheException caught: {e.Message}");
+                Console.WriteLine("Retrying in 10 second...");
+                await Task.Delay(5000);
             }
         }
     }
