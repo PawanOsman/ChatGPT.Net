@@ -63,8 +63,8 @@ public class ChatGpt
             Query = new []
             {
                 new KeyValuePair<string, string>("client", "csharp"),
-                new KeyValuePair<string, string>("version", "1.1.2"),
-                new KeyValuePair<string, string>("versionCode", "112"),
+                new KeyValuePair<string, string>("version", "1.1.3"),
+                new KeyValuePair<string, string>("versionCode", "113"),
             }
         });
 
@@ -103,22 +103,21 @@ public class ChatGpt
 
         Socket.OnDisconnected += async (sender, e) =>
         {
+            if(!Ready) return;
             Ready = false;
             Console.WriteLine("Disconnected from the Bypass Node! Reconnecting...");
-            while (true)
+            tryAgain:
+            try
             {
-                try
-                {
-                    await Socket.ConnectAsync();
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    Ready = false;
-                    Console.WriteLine($"CacheException caught: {ex.Message}");
-                    Console.WriteLine("Retrying in 10 second...");
-                    await Task.Delay(5000);
-                }
+                await Socket.ConnectAsync();
+            }
+            catch (Exception ex)
+            {
+                Ready = false;
+                Console.WriteLine($"CacheException caught: {ex.Message}");
+                Console.WriteLine("Retrying in 10 second...");
+                await Task.Delay(5000);
+                goto tryAgain;
             }
         };
 
