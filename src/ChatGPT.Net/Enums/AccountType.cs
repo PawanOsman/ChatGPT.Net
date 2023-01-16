@@ -2,7 +2,6 @@
 
 public enum AccountType
 {
-    Email,
-    Gmail,
-    Microsoft
+    Free,
+    Pro
 }
