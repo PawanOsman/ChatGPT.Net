@@ -12,13 +12,17 @@ if (clientConfig is null) throw new Exception("Config is empty or incorrect");
 
 var chatGpt = new ChatGpt(new ChatGptConfig
 {
+    // BypassNode = "https://socket.pawan.krd",
     UseCache = false
 });
 
 await chatGpt.WaitForReady();
 
 var chatGptClient = await chatGpt.CreateClient(clientConfig);
-
+chatGptClient.OnError += (error) =>
+{
+    Console.WriteLine(error);
+};
 app.MapGet("/", () => Results.Ok(new
 {
     Status = true
