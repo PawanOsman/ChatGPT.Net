@@ -12,9 +12,11 @@ public class ChatGptClient
     private bool LocalReady { get; set; }
     public string SessionToken { get; set; }
     private string AccessToken { get; set; }
+    private string Signature { get; set; }
     private AccountType AccountType { get; set; }
     private DateTimeOffset? AccessTokenExpiresAt { get; set; }
     public Action<string> OnError;
+    public string ConfigDir { get; set; }
     public string FilePath { get; set; }
     private Func<bool> GetReadyState { get; set; }
     private Func<SocketIO> GetSocketConnection { get; set; }
@@ -26,8 +28,20 @@ public class ChatGptClient
         SessionToken = clientConfig.SessionToken;
         AccountType = clientConfig.AccountType;
         GetReadyState = getReadyState;
+        Signature = GetSignature();
         GetSocketConnection = getSocketConnection;
-        FilePath = Path.Combine(Directory.GetCurrentDirectory(), $"{Name}-ChatGPT-Net.json");
+        ConfigDir = clientConfig.ConfigDir ?? "Configs";
+        var configDirFullPath = Path.Combine(Directory.GetCurrentDirectory(), ConfigDir);
+        if (!Directory.Exists(configDirFullPath)) Directory.CreateDirectory(configDirFullPath);
+        Directory.GetFiles(Directory.GetCurrentDirectory())
+            .Where(file => file.EndsWith("-ChatGPT-Net.json"))
+            .ToList()
+            .ForEach(file =>
+            {
+                File.Move(file, Path.Combine(ConfigDir, Path.GetFileName(file)));
+                Console.WriteLine($"Moved {file} to {ConfigDir}");
+            });
+        FilePath = Path.Combine(Directory.GetCurrentDirectory(), ConfigDir, $"{Name}-ChatGPT-Net.json");
         Conversations = new List<ChatGptConversation>()
         {
             new()
@@ -61,6 +75,14 @@ public class ChatGptClient
         });
     }
 
+    private string GetSignature()
+    {
+        using var md5 = System.Security.Cryptography.MD5.Create();
+        var inputBytes = Encoding.ASCII.GetBytes(SessionToken);
+        var hashBytes = md5.ComputeHash(inputBytes);
+        return Convert.ToHexString(hashBytes);
+    }
+
     public async Task Save()
     {
         var configData = new ConfigData
@@ -70,7 +92,8 @@ public class ChatGptClient
             AccountType = AccountType,
             AccessTokenExpiresAt = AccessTokenExpiresAt,
             AccessToken = AccessToken,
-            Conversations = Conversations
+            Conversations = Conversations,
+            Signature = Signature
         };
         
         var configJson = JsonConvert.SerializeObject(configData, Formatting.Indented);
@@ -86,17 +109,27 @@ public class ChatGptClient
             if(configData == null)
                 return;
             Name = configData.Name;
-            SessionToken = configData.SessionToken;
             AccountType = configData.AccountType;
             AccessTokenExpiresAt = configData.AccessTokenExpiresAt;
             AccessToken = configData.AccessToken;
             Conversations = configData.Conversations;
             await Task.Delay(1000);
+            if (configData.Signature != Signature)
+            {
+                Console.WriteLine("Session token changed, re-authenticating the new session token...");
+                AccessToken = null;
+                await RefreshAccessToken();
+            }
+            else
+            {
+                SessionToken = configData.SessionToken;
+            }
+
             if(AccessToken is null)
                 LocalReady = true;
         }
     }
-    
+
     public async Task RefreshAccessToken()
     {
         await WaitForReady();
@@ -146,15 +179,17 @@ public class ChatGptClient
         await WaitForReady();
         await WaitForLocalReady();
 
-        var conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
+        var conversation = Conversations.FirstOrDefault(x => x.Id == conversationId || x.ConversationId == conversationId);
 
         if (conversation == null)
         {
+            var isOpenAI = Guid.TryParse(conversationId, out _);
             conversation = new ChatGptConversation()
             {
                 Id = conversationId,
                 ParentMessageId = Guid.NewGuid().ToString()
             };
+            if (isOpenAI) conversation.ConversationId = conversationId;
             Conversations.Add(conversation);
             await Save();
         }
@@ -179,9 +214,12 @@ public class ChatGptClient
                         OnError?.Invoke(result.Error);
                         Console.WriteLine(result.Error);
                     }
-                    conversation.ConversationId = result.ConversationId;
-                    conversation.ParentMessageId = result.MessageId;
-                    conversation.Updated = DateTime.Now;
+                    else
+                    {
+                        conversation.ConversationId = result.ConversationId;
+                        conversation.ParentMessageId = result.MessageId;
+                        conversation.Updated = DateTime.Now;
+                    }
                     tcs.SetResult(result.Answer);
                 }, chatGptRequest);
                 break;
@@ -194,9 +232,12 @@ public class ChatGptClient
                         OnError?.Invoke(result.Error);
                         Console.WriteLine(result.Error);
                     }
-                    conversation.ConversationId = result.ConversationId;
-                    conversation.ParentMessageId = result.MessageId;
-                    conversation.Updated = DateTime.Now;
+                    else
+                    {
+                        conversation.ConversationId = result.ConversationId;
+                        conversation.ParentMessageId = result.MessageId;
+                        conversation.Updated = DateTime.Now;
+                    }
                     tcs.SetResult(result.Answer);
                 }, chatGptRequest);
                 break;

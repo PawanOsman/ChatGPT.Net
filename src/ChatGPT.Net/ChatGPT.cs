@@ -13,11 +13,13 @@ public class ChatGpt
     private bool Ready { get; set; } = false;
     private string BypassNode { get; set; }
     private SocketIO Socket { get; set; }
+    private string SessionId { get; set; }
     private List<ChatGptClient> ChatGptClients { get; set; } = new();
 
     public ChatGpt(ChatGptConfig config = null)
     {
         config ??= new ChatGptConfig();
+        SessionId = Guid.NewGuid().ToString();
         UseCache = config.UseCache;
         SaveCache = config.SaveCache;
         BypassNode = config.BypassNode;
@@ -63,8 +65,9 @@ public class ChatGpt
             Query = new []
             {
                 new KeyValuePair<string, string>("client", "csharp"),
-                new KeyValuePair<string, string>("version", "1.1.3"),
-                new KeyValuePair<string, string>("versionCode", "113"),
+                new KeyValuePair<string, string>("version", "1.1.5"),
+                new KeyValuePair<string, string>("versionCode", "115"),
+                new KeyValuePair<string, string>("signature", SessionId)
             }
         });
 
