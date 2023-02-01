@@ -1,9 +1,9 @@
+# Update 01-FEB-2023
+## We released a package to use ChatGPT using official OpenAI API without rate limits for free [[Click Here](https://github.com/PawanOsman/ChatGPT-Official)]
 
-# Update 21-JAN-2023
-## We have implemented support for pro accounts. [[NodeJS Version](https://github.com/PawanOsman/chatgpt-io)][[Python Version](https://github.com/PawanOsman/ChatGPT.py)]
-
-## For support join [[Discord](https://discord.pawan.krd)]
+### For support join [[Discord](https://discord.pawan.krd)]
 # ChatGPT.Net - Unofficial API client for ChatGPT [[Discord](https://discord.pawan.krd)]
+### Other versions [[NodeJS Version](https://github.com/PawanOsman/chatgpt-io)][[Python Version](https://github.com/PawanOsman/ChatGPT.py)]
 
 [![Nuget Package](https://img.shields.io/nuget/v/ChatGPT.Net?logo=NuGet&color=004880&label=NuGet)](https://www.nuget.org/packages/ChatGPT.Net)
 [![Nuget Package](https://img.shields.io/nuget/dt/ChatGPT.Net?color=%23004880&label=Downloads&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAsQAAALEBxi1JjQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAKoSURBVEiJ7ZZLTBNRFIb%2FedDS6UNKVQgZAkJTlJdACoZgGhKj0QSNwUVxIbrRhSaasCJh58atcaExkYXogoRISF2UxJVReYkWK6gTB9KK1bZjBQlMNcz0ujAlJe3QamSl%2F%2B7m3PP995w592aAbRaVy6bqanujycZeSa4TKlGXo2qvKIpStlw2FwOdjnG5zvFnS%2BuMAIDJoci3icHoLQB%2FxwAATDYWBSX5AADOwiZyzaNz3fin%2Bm%2FwDxhojSlTW19xgaXz9ACgqIpr05WkQOWb6dMNDVUHAUBJrP%2BY9S%2FcBpA2vpo3udHpeNx0sqiNrzExFEVQWm8Gq%2FtVsLysIPxeBgB8nFtVfZ7o2MspwZWJo9kiKSwf9Xujs9YSHfY4d2zAAYArYFHRbEEhr4ffK71VgsvHtDiMVmBlZUXRMeaRRd9qZ%2B0RmzXVAAASCsHA5XcLkWC8XQiFlrQ4W37kQCAQlhbXOwd7hVBCIZvg%2FlFpms6nnYFAILwVQ7OCpGKxWMRssIhRUT60r73QCACeawuSbyTWN%2FXkzYts%2BRtTVNfc9ojhOCtREsxaJHhRFMXxZMzvEz163V7H0%2Fuf%2BmhC6KBv7cbMjDCUCrLb7a3GorKbFEurqiwvvX7%2B7PAmp5YO93yPQEhXv5c4yivdmU7jbK0acLY57maKOcor3V39XtIjENLS4Z5PqyApmmHA6jkuE2R6XOjW6ARYPcfRTHrH0wxsNU5wFfarDcXFl7RgmZRnMO0urG3ewiChqgCQZ7HCdX2YB8D%2FjkGqiKqoaQbxr1%2BmPowO8Tv3HzCAYcDtKoEcDQGEgCviEZc%2Bg6hKVrj0aiL%2BfSk2mVynPhV0dVPLeZ3B2ApCkcoTZ4bnHw6cAoCy490Pgp57naBI1p%2BE9TV5bG5m8g4yvEvbop%2BZL%2FJtWVlNhAAAAABJRU5ErkJggg%3D%3D)](https://www.nuget.org/packages/ChatGPT.Net)
