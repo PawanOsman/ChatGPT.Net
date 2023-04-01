@@ -1,162 +1,264 @@
-﻿using ChatGPT.Net.DTO;
-using ChatGPT.Net.Session;
+﻿using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using ChatGPT.Net.DTO;
+using ChatGPT.Net.DTO.ChatGPT;
+using ChatGPT.Net.DTO.ChatGPTUnofficial;
 using Newtonsoft.Json;
-using SocketIOClient;
 
 namespace ChatGPT.Net;
 
 public class ChatGpt
 {
-    public List<ChatGptMessage> Messages { get; set; } = new();
-    public bool UseCache { get; set; } = true;
-    public bool SaveCache { get; set; } = true;
-    private bool Ready { get; set; } = false;
-    private string BypassNode { get; set; }
-    private SocketIO Socket { get; set; }
-    private string SessionId { get; set; }
-    private List<ChatGptClient> ChatGptClients { get; set; } = new();
+    public Guid SessionId { get; set; }
+    public ChatGptOptions Config { get; set; } = new();
+    public List<ChatGptConversation> Conversations { get; set; } = new();
+    public string APIKey { get; set; }
 
-    public ChatGpt(ChatGptConfig config = null)
+    public ChatGpt(string apikey, ChatGptOptions? config = null)
     {
-        config ??= new ChatGptConfig();
-        SessionId = Guid.NewGuid().ToString();
-        UseCache = config.UseCache;
-        SaveCache = config.SaveCache;
-        BypassNode = config.BypassNode;
-        if (SaveCache)
+        Config = config ?? new ChatGptOptions();
+        SessionId = Guid.NewGuid();
+        APIKey = apikey;
+    }
+
+    private async IAsyncEnumerable<string> StreamCompletion(Stream stream)
+    {
+        using var reader = new StreamReader(stream);
+        while (!reader.EndOfStream)
         {
-            Task.Run(async () =>
+            var line = await reader.ReadLineAsync();
+            if (line != null)
             {
-                while (true)
-                {
-                    await WaitForReady();
-                    var json = JsonConvert.SerializeObject(Messages, Formatting.Indented);
-                    await File.WriteAllTextAsync("cache.json", json);
-                    await Task.Delay(30000);
-                }
-            });
+                yield return line;
+            }
+        }
+    }
+
+    public void SetConversationSystemMessage(string conversationId, string message)
+    {
+        var conversation = GetConversation(conversationId);
+        conversation.Messages.Add(new ChatGptMessage
+        {
+            Role = "system",
+            Content = message
+        });
+    }
+
+    public void ReplaceConversationSystemMessage(string conversationId, string message)
+    {
+        var conversation = GetConversation(conversationId);
+        conversation.Messages = conversation.Messages.Where(x => x.Role != "system").ToList();
+        conversation.Messages.Add(new ChatGptMessage
+        {
+            Role = "system",
+            Content = message
+        });
+    }
+    
+    public void RemoveConversationSystemMessages(string conversationId, string message)
+    {
+        var conversation = GetConversation(conversationId);
+        conversation.Messages = conversation.Messages.Where(x => x.Role != "system").ToList();
+    }
+    
+    public List<ChatGptConversation> GetConversations()
+    {
+        return Conversations;
+    }
+
+    public void SetConversations(List<ChatGptConversation> conversations)
+    {
+        Conversations = conversations;
+    }
+
+    public ChatGptConversation GetConversation(string? conversationId)
+    {
+        if (conversationId is null)
+        {
+            return new ChatGptConversation();
         }
 
-        Task.Run(Init);
+        var conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
+
+        if (conversation != null) return conversation;
+        conversation = new ChatGptConversation()
+        {
+            Id = conversationId
+        };
+        Conversations.Add(conversation);
+
+        return conversation;
     }
-
-    public async Task WaitForReady()
+    
+    public void SetConversation(string conversationId, ChatGptConversation conversation)
     {
-        while (!Ready) await Task.Delay(25);
-    }
+        var conv = Conversations.FirstOrDefault(x => x.Id == conversationId);
 
-    public bool GetReadyState()
-    {
-        return Ready;
-    }
-
-    public SocketIO GetSocketConnection()
-    {
-        return Socket;
-    }
-
-    private async Task Init()
-    {
-        Ready = false;
-        var firstConnection = true;
-        Socket = new SocketIO(BypassNode, new SocketIOOptions
+        if (conv != null)
         {
-            Reconnection = false,
-            Query = new []
-            {
-                new KeyValuePair<string, string>("client", "csharp"),
-                new KeyValuePair<string, string>("version", "1.1.5"),
-                new KeyValuePair<string, string>("versionCode", "115"),
-                new KeyValuePair<string, string>("signature", SessionId)
-            }
-        });
-
-        Socket.OnConnected += (sender, e) =>
+            conv = conversation;
+        }
+        else
         {
-            if(firstConnection) Console.WriteLine("Connected to the Bypass Node!");
-            firstConnection = false;
-            Ready = true;
-        };
-        
-        Socket.OnReconnected += (sender, e) =>
-        {
-            Console.WriteLine("Reconnected to the Bypass Node!");
-            Ready = true;
-        };
-        
-        Socket.OnError += (sender, e) =>
-        {
-            Console.WriteLine($"Error: {e}");
-        };
-
-        Socket.OnReconnectAttempt += (sender, e) =>
-        {
-            Console.WriteLine($"Reconnecting...");
-        };
-        
-        Socket.OnReconnectError += (sender, e) =>
-        {
-            Console.WriteLine($"Reconnection Error: {e}");
-        };
-
-        Socket.OnReconnectFailed += (sender, e) =>
-        {
-            Console.WriteLine($"Reconnection Failed!");
-        };
-
-        Socket.OnDisconnected += async (sender, e) =>
-        {
-            if(!Ready) return;
-            Ready = false;
-            Console.WriteLine("Disconnected from the Bypass Node! Reconnecting...");
-            tryAgain:
-            try
-            {
-                await Socket.ConnectAsync();
-            }
-            catch (Exception ex)
-            {
-                Ready = false;
-                Console.WriteLine($"CacheException caught: {ex.Message}");
-                Console.WriteLine("Retrying in 10 second...");
-                await Task.Delay(5000);
-                goto tryAgain;
-            }
-        };
-
-        Socket.On("serverMessage", Console.WriteLine);
-
-        while (true)
-        {
-            try
-            {
-                await Socket.ConnectAsync();
-                break;
-            }
-            catch (Exception e)
-            {
-                Ready = false;
-                Console.WriteLine($"CacheException caught: {e.Message}");
-                Console.WriteLine("Retrying in 10 second...");
-                await Task.Delay(5000);
-            }
+            Conversations.Add(conversation);
         }
     }
     
-    public async Task<ChatGptClient> CreateClient(ChatGptClientConfig config)
+    public void RemoveConversation(string conversationId)
     {
-        var chatGptClient = new ChatGptClient(config, GetReadyState, GetSocketConnection);
-        if (string.IsNullOrWhiteSpace(config.SessionToken))
+        var conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
+
+        if (conversation != null)
         {
-            throw new Exception("You need to provide either a session token or an account.");
+            Conversations.Remove(conversation);
+        }
+    }
+
+    public void ResetConversation(string conversationId)
+    {
+        var conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
+
+        if (conversation == null) return;
+        conversation.Messages = new();
+    }
+
+    public void ClearConversations()
+    {
+        Conversations.Clear();
+    }
+
+    public async Task<string> Ask(string prompt, string? conversationId = null)
+    {
+        var conversation = GetConversation(conversationId);
+
+        conversation.Messages.Add(new ChatGptMessage
+        {
+            Role = "user",
+            Content = prompt
+        });
+        
+        var reply = await SendMessage(new ChatGptRequest
+        {
+            Messages = conversation.Messages,
+            Model = Config.Model,
+            Stream = false,
+            Temperature = Config.Temperature,
+            TopP = Config.TopP,
+            FrequencyPenalty = Config.FrequencyPenalty,
+            PresencePenalty = Config.PresencePenalty,
+            Stop = Config.Stop,
+            MaxTokens = Config.MaxTokens,
+        });
+        
+        conversation.Updated = DateTime.Now;
+
+        return reply.Choices.FirstOrDefault()?.Message.Content ?? "";
+    }
+
+    public async Task<string> AskStream(Action<string> callback, string prompt, string? conversationId = null)
+    {
+        var conversation = GetConversation(conversationId);
+
+        conversation.Messages.Add(new ChatGptMessage
+        {
+            Role = "user",
+            Content = prompt
+        });
+
+        var reply = await SendMessage(new ChatGptRequest
+        {
+            Messages = conversation.Messages,
+            Model = Config.Model,
+            Stream = true,
+            Temperature = Config.Temperature,
+            TopP = Config.TopP,
+            FrequencyPenalty = Config.FrequencyPenalty,
+            PresencePenalty = Config.PresencePenalty,
+            Stop = Config.Stop,
+            MaxTokens = Config.MaxTokens,
+        }, response =>
+        {
+            var content = response.Choices.FirstOrDefault()?.Delta.Content;
+            if (content is null) return;
+            if (!string.IsNullOrWhiteSpace(content)) callback(content);
+        });
+        
+        conversation.Updated = DateTime.Now;
+
+        return reply.Choices.FirstOrDefault()?.Message.Content ?? "";
+    }
+
+    public async Task<ChatGptResponse> SendMessage(ChatGptRequest requestBody, Action<ChatGptStreamChunkResponse>? callback = null)
+    {
+        var client = new HttpClient();
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Post,
+            RequestUri = new Uri($"{Config.BaseUrl}/v1/chat/completions"),
+            Headers =
+            {
+                {"Authorization", $"Bearer {APIKey}" }
+            },
+            Content = new StringContent(JsonConvert.SerializeObject(requestBody))
+            {
+                Headers =
+                {
+                    ContentType = new MediaTypeHeaderValue("application/json")
+                }
+            }
+        };
+
+        var response = await client.SendAsync(request);
+
+        response.EnsureSuccessStatusCode();
+
+        if (requestBody.Stream)
+        {
+            var contentType = response.Content.Headers.ContentType?.MediaType;
+            if (contentType != "text/event-stream")
+            {
+                var error = await response.Content.ReadFromJsonAsync<ChatGptResponse>();
+                throw new Exception(error?.Error?.Message ?? "Unknown error");
+            }
+
+            var concatMessages = string.Empty;
+            
+            ChatGptStreamChunkResponse? reply = null;
+            var stream = await response.Content.ReadAsStreamAsync();
+            await foreach (var data in StreamCompletion(stream))
+            {
+                var jsonString = data.Replace("data: ", "");
+                if (string.IsNullOrWhiteSpace(jsonString)) continue;
+                if(jsonString == "[DONE]") break;
+                reply = JsonConvert.DeserializeObject<ChatGptStreamChunkResponse>(jsonString);
+                if (reply is null) continue;
+                concatMessages += reply.Choices.FirstOrDefault()?.Delta.Content;
+                callback?.Invoke(reply);
+            }
+            
+            return new ChatGptResponse
+            {
+                Id = reply?.Id ?? Guid.NewGuid().ToString(),
+                Model = reply?.Model ?? "gpt-3.5-turbo",
+                Created = reply?.Created ?? 0,
+                Choices = new List<Choice>
+                {
+                    new()
+                    {
+                        Message = new ChatGptMessage
+                        {
+                            Content = concatMessages
+                        }
+                    }
+                }
+            };
         }
 
-        if (!string.IsNullOrWhiteSpace(config.SessionToken))
-        {
-            await chatGptClient.RefreshAccessToken();
-        }
-
-        ChatGptClients.Add(chatGptClient);
-        return chatGptClient;
+        var content = await response.Content.ReadFromJsonAsync<ChatGptResponse>();
+        if(content is null) throw new Exception("Unknown error");
+        if(content.Error is not null) throw new Exception(content.Error.Message);
+        return content;
     }
 }
