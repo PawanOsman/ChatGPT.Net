@@ -1,5 +1,6 @@
-# ChatGPT.Net - Unofficial API client for ChatGPT [[Discord](https://discord.pawan.krd)]
-### Other versions [[NodeJS Version](https://github.com/PawanOsman/chatgpt-io)][[Python Version](https://github.com/PawanOsman/ChatGPT.py)]
+# ChatGPT.Net - .Net Library for ChatGPT [[Discord](https://discord.pawan.krd)]
+
+### Other versions [[NodeJS Version](https://github.com/PawanOsman/ChatGPT-Official)]
 
 [![Nuget Package](https://img.shields.io/nuget/v/ChatGPT.Net?logo=NuGet&color=004880&label=NuGet)](https://www.nuget.org/packages/ChatGPT.Net)
 [![Nuget Package](https://img.shields.io/nuget/dt/ChatGPT.Net?color=%23004880&label=Downloads&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAsQAAALEBxi1JjQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAKoSURBVEiJ7ZZLTBNRFIb%2FedDS6UNKVQgZAkJTlJdACoZgGhKj0QSNwUVxIbrRhSaasCJh58atcaExkYXogoRISF2UxJVReYkWK6gTB9KK1bZjBQlMNcz0ujAlJe3QamSl%2F%2B7m3PP995w592aAbRaVy6bqanujycZeSa4TKlGXo2qvKIpStlw2FwOdjnG5zvFnS%2BuMAIDJoci3icHoLQB%2FxwAATDYWBSX5AADOwiZyzaNz3fin%2Bm%2FwDxhojSlTW19xgaXz9ACgqIpr05WkQOWb6dMNDVUHAUBJrP%2BY9S%2FcBpA2vpo3udHpeNx0sqiNrzExFEVQWm8Gq%2FtVsLysIPxeBgB8nFtVfZ7o2MspwZWJo9kiKSwf9Xujs9YSHfY4d2zAAYArYFHRbEEhr4ffK71VgsvHtDiMVmBlZUXRMeaRRd9qZ%2B0RmzXVAAASCsHA5XcLkWC8XQiFlrQ4W37kQCAQlhbXOwd7hVBCIZvg%2FlFpms6nnYFAILwVQ7OCpGKxWMRssIhRUT60r73QCACeawuSbyTWN%2FXkzYts%2BRtTVNfc9ojhOCtREsxaJHhRFMXxZMzvEz163V7H0%2Fuf%2BmhC6KBv7cbMjDCUCrLb7a3GorKbFEurqiwvvX7%2B7PAmp5YO93yPQEhXv5c4yivdmU7jbK0acLY57maKOcor3V39XtIjENLS4Z5PqyApmmHA6jkuE2R6XOjW6ARYPcfRTHrH0wxsNU5wFfarDcXFl7RgmZRnMO0urG3ewiChqgCQZ7HCdX2YB8D%2FjkGqiKqoaQbxr1%2BmPowO8Tv3HzCAYcDtKoEcDQGEgCviEZc%2Bg6hKVrj0aiL%2BfSk2mVynPhV0dVPLeZ3B2ApCkcoTZ4bnHw6cAoCy490Pgp57naBI1p%2BE9TV5bG5m8g4yvEvbop%2BZL%2FJtWVlNhAAAAABJRU5ErkJggg%3D%3D)](https://www.nuget.org/packages/ChatGPT.Net)
@@ -11,32 +12,41 @@
 
 ## [Check the new Google Bard Chatbot!](https://github.com/PawanOsman/GoogleBard)
 
-The ChatGPT.Net Unofficial .Net API for ChatGPT is a C# library that allows developers to access ChatGPT, a chat-based language model. With this API, developers can send queries to ChatGPT and receive responses in real-time, making it easy to integrate ChatGPT into their own applications.
+The ChatGPT.Net is a C# library for ChatGPT using official OpenAI API that allows developers to access ChatGPT, a chat-based large language model. With this API, developers can send queries to ChatGPT and receive responses in real-time, making it easy to integrate ChatGPT into their own applications.
 
 ```csharp
 using ChatGPT.Net;
 
-var chatGpt = new ChatGpt();
-await chatGpt.WaitForReady();
-var chatGptClient = await chatGpt.CreateClient(new ChatGptClientConfig
-{
-    SessionToken = "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2......."
-});
-var response = await chatGptClient.Ask("What is the weather like today?");
+// ChatGPT Official API
+var bot = new ChatGpt("<API_KEY>");
+
+var response = await bot.Ask("What is the weather like today?");
 Console.WriteLine(response);
 ```
 
+## Table of Contents
+
+- [Features](#features)
+- [Getting Started](#getting-started)
+    - [Usage](#usage)
+        - [ChatGPT Official API](#chatgpt-official-api)
+        - [ChatGPT Unofficial API](#chatgpt-unofficial-api)
+- [Configuration options](#configuration-options)
+    - [ChatGPT Official API](#chatgpt-official-api)
+    - [ChatGPT Unofficial API](#chatgpt-unofficial-api)
+- [Examples](#examples)
+    - [ChatGPT Console App](#chatgpt-console-app)
+    - [Use a different model](#use-a-different-model)
+    - [Using ChatGPT Official API For Free](#using-chatgpt-official-api-for-free)
+- [License](#license)
+
 ## Features
--   New method without using a browser.
--   Automatic login to ChatGPT using SessionToken.
--   Bypass of Cloudflare protection and fake rate limit protection.
--   Functionality to reset conversations or create multiple conversations.
--   Automatic refresh of ChatGPT access token.
--   Cache system enabled by default, with cached data saved to cache.json to reduce requests to ChatGPT endpoint and reduce rate limiting.
 
-## How the new method working without a browser?
-The new method operates without a browser by utilizing a server that has implemented bypass methods to function as a proxy. The library sends requests to the server, which then redirects the request to ChatGPT while bypassing Cloudflare and other bot detection measures. The server then returns the ChatGPT response, ensuring that the method remains effective even if ChatGPT implements changes to prevent bot usage. Our servers are continuously updated to maintain their bypass capabilities.
-
+- Easy to use.
+- Using official OpenAI API.
+- Supports both free and pro accounts.
+- Supports multiple accounts, and multiple conversations.
+- Support response streaming, so you can get response while the model is still generating it.
 
 ## Getting Started
 
@@ -50,72 +60,145 @@ Alternatively, you can install it using the .NET Core command-line interface:
 
 ```bash
 dotnet add package ChatGPT.Net
-``` 
+```
 
 ### Usage
+
+### ChatGPT Official API
 
 Here is a sample code showing how to use ChatGPT.Net:
 
 ```csharp
 using ChatGPT.Net;
 
-var chatGpt = new ChatGpt(new ChatGptConfig  
-{  
-    UseCache = true  
-});
-await chatGpt.WaitForReady();
-var chatGptClient = await chatGpt.CreateClient(new ChatGptClientConfig
-{
-    SessionToken = "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2.......",  
-    AccountType = AccountType.Free
-});
-var conversationId = "a-unique-string-id";
-var response = await chatGptClient.Ask("What is the weather like today?", conversationId);
+// ChatGPT Official API
+var bot = new ChatGpt("<API_KEY>");
+
+// get response
+var response = await bot.Ask("What is the weather like today?");
 Console.WriteLine(response);
 
-await chatGptClient.ResetConversation(conversationId);
+// stream response
+await bot.AskStream(response => {
+    Console.WriteLine(response);
+}, "What is the weather like today?");
 
+// get response for a specific conversation
+var response = await bot.Ask("What is the weather like today?", "conversation name");
+Console.WriteLine(response);
 
-var chatGptClient2 = await chatGpt.CreateClient(new ChatGptClientConfig
-{
-    SessionToken = "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2.......",  
-    AccountType = AccountType.Pro
-});
-var response2 = await chatGptClient2 .Ask("What is the weather like today?");
-Console.WriteLine(response2);
+// stream response for a specific conversation
+await bot.AskStream(response => {
+    Console.WriteLine(response);
+}, "What is the weather like today?", "conversation name");
 ```
 
-The code above demonstrates how to use the ChatGPT.Net library to create and interact with multiple ChatGPT clients and conversations simultaneously.
+### ChatGPT Unofficial API
 
-The `ChatGpt` class is used to initialize the ChatGPT library and wait for it to be ready. The `CreateClient` method is then called to create a new client using a specified configuration.
+Here is a sample code showing how to integrate (chat.openai.com) with your applications using ChatGPT.Net:
 
-Once the client is created, the `Ask` method can be called to send a message to ChatGPT and receive a response. The `conversationId` parameter is optional and can be used to specify the conversation that the message should be sent to. If no conversation ID is provided, a default conversation ID will be used.
+```csharp
+using ChatGPT.Net;
 
-The `ResetConversation` method can be used to reset a specific conversation associated with a particular client. This allows the client to be used to start a new conversation with ChatGPT as if it were the first time the client was used.
+// ChatGPT Official API
+var bot = new ChatGptUnofficial("<SESSION_TOKEN>");
 
-Multiple ChatGPT clients can be created and used to manage multiple accounts simultaneously. It is important to note that the `SessionToken` in the configuration must be a valid token in order to successfully authenticate and use the ChatGPT service.
+// get response
+var response = await bot.Ask("What is the weather like today?");
+Console.WriteLine(response);
 
-## Documentation for the `ChatGptConfig` class:
+// stream response
+await bot.AskStream(response => {
+    Console.WriteLine(response);
+}, "What is the weather like today?");
 
-### Properties
+// get response for a specific conversation
+var response = await bot.Ask("What is the weather like today?", "conversation name");
+Console.WriteLine(response);
 
-#### `UseCache` (bool)
+// stream response for a specific conversation
+await bot.AskStream(response => {
+    Console.WriteLine(response);
+}, "What is the weather like today?", "conversation name");
+```
 
-If `true`, the client will check for a cache of responses before generating a new one. If `false`, the client will always generate a new response.
+## Configuration options
 
-#### `SaveCache` (bool)
+### ChatGPT Official API
 
-If `true`, the client will save responses to a cache file (`cache.json`) in the working directory after generating them. If `false`, the client will not save responses to the cache.
+```csharp
+ChatGptOptions
+{
+    string BaseUrl; // Default: https://api.openai.com
+    string Model; // Default: gpt-3.5-turbo
+    double Temperature; // Default: 0.9;
+    double TopP; // Default: 1.0;
+    long MaxTokens; // Default: 64;
+    string[]? Stop; // Default: null;
+    double PresencePenalty; // Default: 0.0;
+    double FrequencyPenaltyl; // Default: 0.0;
+}
+```
 
-## Documentation for the `ChatGptClientConfig` class:
+### ChatGPT Unofficial API
 
-### Properties
+```csharp
+ChatGptUnofficialOptions
+{
+    string BaseUrl; // Default: https://api.pawan.krd
+    string Model; // Default: text-davinci-002-render-sha
+}
+```
 
-#### `SessionToken` (string)
+## Examples
 
-This property specifies the session token for the ChatGPT account.
+### ChatGPT Console App
 
-#### `AccountType` (AccountType)
+This is a simple console app that uses ChatGPT.Net to interact with ChatGPT.
 
-This property specifies the ChatGPT account type (free or pro) .
+```csharp
+using ChatGPT.Net;
 
+// ChatGPT Official API
+var bot = new ChatGpt("<API_KEY>");
+
+var prompt = string.Empty;
+
+while (true)
+{
+    Console.Write("You: ");
+    prompt = Console.ReadLine();
+    if (prompt is null) break;
+    if (string.IsNullOrWhiteSpace(prompt)) break;
+    if (prompt == "exit") break;
+    Console.Write("ChatGPT: ");
+    await bot.AskStream(Console.Write, prompt, "default");
+    Console.WriteLine();
+}
+```
+
+### Use a different model
+
+You can use a different model by passing the model name to the constructor.
+
+```csharp
+var bot = new ChatGpt("<API_KEY>", new ChatGptOptions
+{
+    Model = "text-davinci-002-render-paid"
+});
+```
+
+### Using ChatGPT Official API For Free
+
+you can use ChatGPT Official API by setting the base url to a free reverse proxy server like [ChatGPT Free Reverse Proxy](https://github.com/PawanOsman/ChatGPT)
+
+```csharp
+var bot = new ChatGpt("<API_KEY>", new ChatGptOptions
+{
+    BaseUrl = "https://api.pawan.krd"
+});
+```
+
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
