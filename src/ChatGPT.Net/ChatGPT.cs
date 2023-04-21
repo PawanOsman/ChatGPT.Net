@@ -210,7 +210,7 @@ public class ChatGpt
             }
         };
 
-        var response = await client.SendAsync(request);
+        var response = await client.SendAsync(request,HttpCompletionOption.ResponseHeadersRead);
 
         response.EnsureSuccessStatusCode();
 
