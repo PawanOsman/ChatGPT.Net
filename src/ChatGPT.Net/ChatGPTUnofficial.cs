@@ -279,11 +279,12 @@ public class ChatGptUnofficial
             //Ignore stream end tag
             if (dataJson.ToLower() == "[done]")
                 continue;
-            reply = JsonConvert.DeserializeObject<ChatGptUnofficialMessageResponse>(dataJson);
-            if(reply is not null)
-            {
-                callback?.Invoke(reply);
-            }
+            //Try Deserialize
+            var replyNew = JsonConvert.DeserializeObject<ChatGptUnofficialMessageResponse>(dataJson);
+            if (replyNew == null)
+                continue;
+            reply = replyNew;
+            callback?.Invoke(reply);
         }
 
         return reply ?? new ChatGptUnofficialMessageResponse();
