@@ -266,7 +266,14 @@ public class ChatGptUnofficial
 
         await foreach (var data in StreamCompletion(stream))
         {
-            reply = JsonConvert.DeserializeObject<ChatGptUnofficialMessageResponse>(data.Replace("data: ", ""));
+            var dataJson = data;
+            //Trim start
+            if (dataJson.StartsWith("data: "))
+                dataJson = dataJson[6..];
+            //Ignore stream end tag
+            if (dataJson.ToLower() == "[done]")
+                continue;
+            reply = JsonConvert.DeserializeObject<ChatGptUnofficialMessageResponse>(dataJson);
             if(reply is not null)
             {
                 callback?.Invoke(reply);
