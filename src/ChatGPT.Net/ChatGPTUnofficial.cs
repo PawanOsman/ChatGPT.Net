@@ -196,8 +196,14 @@ public class ChatGptUnofficial
         if (tokenParts.Length != 3) {
             return false;
         }
-    
-        var decodedPayload = Encoding.UTF8.GetString(Convert.FromBase64String(tokenParts[1]));
+        
+        //Ensure the string length is a multiple of 4
+        var tokenPart = tokenParts[1];
+        var remainderLength = tokenPart.Length % 4;
+        if (remainderLength > 0)
+            tokenPart = tokenPart.PadRight(tokenPart.Length - remainderLength + 4, '=');
+
+        var decodedPayload = Encoding.UTF8.GetString(Convert.FromBase64String(tokenPart));
         var parsed = JsonDocument.Parse(decodedPayload).RootElement;
     
         return DateTimeOffset.Now.ToUnixTimeMilliseconds() <= parsed.GetProperty("exp").GetInt64() * 1000;
