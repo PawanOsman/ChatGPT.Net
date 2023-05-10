@@ -196,8 +196,14 @@ public class ChatGptUnofficial
         if (tokenParts.Length != 3) {
             return false;
         }
-    
-        var decodedPayload = Encoding.UTF8.GetString(Convert.FromBase64String(tokenParts[1]));
+        
+        //Ensure the string length is a multiple of 4
+        var tokenPart = tokenParts[1];
+        var remainderLength = tokenPart.Length % 4;
+        if (remainderLength > 0)
+            tokenPart = tokenPart.PadRight(tokenPart.Length - remainderLength + 4, '=');
+
+        var decodedPayload = Encoding.UTF8.GetString(Convert.FromBase64String(tokenPart));
         var parsed = JsonDocument.Parse(decodedPayload).RootElement;
     
         return DateTimeOffset.Now.ToUnixTimeMilliseconds() <= parsed.GetProperty("exp").GetInt64() * 1000;
@@ -266,11 +272,19 @@ public class ChatGptUnofficial
 
         await foreach (var data in StreamCompletion(stream))
         {
-            reply = JsonConvert.DeserializeObject<ChatGptUnofficialMessageResponse>(data.Replace("data: ", ""));
-            if(reply is not null)
-            {
-                callback?.Invoke(reply);
-            }
+            var dataJson = data;
+            //Trim start
+            if (dataJson.StartsWith("data: "))
+                dataJson = dataJson[6..];
+            //Ignore stream end tag
+            if (dataJson.ToLower() == "[done]")
+                continue;
+            //Try Deserialize
+            var replyNew = JsonConvert.DeserializeObject<ChatGptUnofficialMessageResponse>(dataJson);
+            if (replyNew == null)
+                continue;
+            reply = replyNew;
+            callback?.Invoke(reply);
         }
 
         return reply ?? new ChatGptUnofficialMessageResponse();
