@@ -273,6 +273,9 @@ public class ChatGptUnofficial
         await foreach (var data in StreamCompletion(stream))
         {
             var dataJson = data;
+            //Ignore ping event
+            if (dataJson.StartsWith("event: "))
+                continue;
             //Trim start
             if (dataJson.StartsWith("data: "))
                 dataJson = dataJson[6..];
@@ -280,11 +283,15 @@ public class ChatGptUnofficial
             if (dataJson.ToLower() == "[done]")
                 continue;
             //Try Deserialize
-            var replyNew = JsonConvert.DeserializeObject<ChatGptUnofficialMessageResponse>(dataJson);
-            if (replyNew == null)
-                continue;
-            reply = replyNew;
-            callback?.Invoke(reply);
+            try
+            {
+                var replyNew = JsonConvert.DeserializeObject<ChatGptUnofficialMessageResponse>(dataJson);
+                if (replyNew == null)
+                    continue;
+                reply = replyNew;
+                callback?.Invoke(reply);
+            }
+            catch { }
         }
 
         return reply ?? new ChatGptUnofficialMessageResponse();
