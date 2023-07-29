@@ -100,7 +100,7 @@ Here is a sample code showing how to integrate (chat.openai.com) with your appli
 ```csharp
 using ChatGPT.Net;
 
-// ChatGPT Official API
+// ChatGPT Unofficial API
 var bot = new ChatGptUnofficial("<SESSION_TOKEN>");
 
 // get response
