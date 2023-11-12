@@ -154,7 +154,15 @@ public class ChatGpt
         
         conversation.Updated = DateTime.Now;
 
-        return reply.Choices.FirstOrDefault()?.Message.Content ?? "";
+        var response = reply.Choices.FirstOrDefault()?.Message.Content ?? "";
+
+        conversation.Messages.Add(new ChatGptMessage
+        {
+            Role = "assistant",
+            Content = response
+        });
+
+        return response;
     }
 
     public async Task<string> AskStream(Action<string> callback, string prompt, string? conversationId = null)
