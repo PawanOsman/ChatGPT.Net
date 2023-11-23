@@ -11,12 +11,41 @@ public class ChatGpt
     public ChatGptOptions Config { get; set; } = new();
     public List<ChatGptConversation> Conversations { get; set; } = new();
     public string APIKey { get; set; }
+    /// <summary>
+    /// <para>Allows adjusting httpclient timeout for arbitrary long or short content</para>
+    /// <para>Default 100 second</para>
+    /// </summary>
+    public static int MaxTimeout { get; set; }
 
-    public ChatGpt(string apikey, ChatGptOptions? config = null)
+    public ChatGpt(string apikey,
+        ChatGptOptions? config = null,
+        int maxTimeout = 100)
     {
         Config = config ?? new ChatGptOptions();
         SessionId = Guid.NewGuid();
         APIKey = apikey;
+        MaxTimeout = maxTimeout;
+    }
+
+    /// <summary>
+    /// <para>Each HttpClient initialization will take up additional ports and will not immediately release itself when the program stops, leading to resource waste.</para>
+    /// <para>https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/http/httpclient-guidelines</para>
+    /// </summary>
+    private static HttpClient _httpClient = null;
+    public static HttpClient httpClient
+    {
+        get
+        {
+            if (_httpClient == null)
+            {
+                _httpClient = new()
+                {
+                    Timeout = TimeSpan.FromSeconds(MaxTimeout)
+                };
+            }
+
+            return _httpClient;
+        }
     }
 
     private async IAsyncEnumerable<string> StreamCompletion(Stream stream)
@@ -196,7 +225,7 @@ public class ChatGpt
 
     public async Task<ChatGptResponse> SendMessage(ChatGptRequest requestBody, Action<ChatGptStreamChunkResponse>? callback = null)
     {
-        HttpClient client = ChatGptUnofficial.httpClient;
+        HttpClient client = ChatGpt.httpClient;
         HttpRequestMessage request = new()
         {
             Method = HttpMethod.Post,

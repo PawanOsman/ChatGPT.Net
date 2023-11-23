@@ -25,7 +25,7 @@ public class ChatGptUnofficial
 
     public async Task RefreshAccessToken()
     {
-        HttpClient client = ChatGptUnofficial.httpClient;
+        HttpClient client = ChatGpt.httpClient;
         HttpRequestMessage request = new()
         {
             Method = HttpMethod.Get,
@@ -243,7 +243,7 @@ public class ChatGptUnofficial
             requestData.ParentMessageId = parentMessageId;
         }
 
-        HttpClient client = ChatGptUnofficial.httpClient;
+        HttpClient client = ChatGpt.httpClient;
         HttpRequestMessage request = new()
         {
             Method = HttpMethod.Post,
@@ -297,21 +297,5 @@ public class ChatGptUnofficial
     }
 
 
-    /// <summary>
-    /// <para>Each HttpClient initialization will take up additional ports and will not immediately release itself when the program stops, leading to resource waste.</para>
-    /// <para>https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/http/httpclient-guidelines</para>
-    /// </summary>
-    private static HttpClient _httpClient = null;
-    public static HttpClient httpClient
-    {
-        get
-        {
-            if (_httpClient == null)
-            {
-                _httpClient = new();
-            }
 
-            return _httpClient;
-        }
-    }
 }
