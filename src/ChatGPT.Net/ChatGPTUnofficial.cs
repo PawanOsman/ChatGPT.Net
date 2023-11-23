@@ -1,11 +1,10 @@
-﻿using System.Net.Http.Headers;
+﻿using ChatGPT.Net.DTO;
+using ChatGPT.Net.DTO.ChatGPTUnofficial;
+using Newtonsoft.Json;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using ChatGPT.Net.DTO;
-using ChatGPT.Net.DTO.ChatGPT;
-using ChatGPT.Net.DTO.ChatGPTUnofficial;
-using Newtonsoft.Json;
 
 namespace ChatGPT.Net;
 
@@ -26,11 +25,8 @@ public class ChatGptUnofficial
 
     public async Task RefreshAccessToken()
     {
-        var client = new HttpClient(new HttpClientHandler
-        {
-            UseCookies = false,
-        });
-        var request = new HttpRequestMessage
+        HttpClient client = ChatGpt.httpClient;
+        HttpRequestMessage request = new()
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri($"{Config.BaseUrl}/api/auth/session"),
@@ -42,30 +38,30 @@ public class ChatGptUnofficial
             }
         };
 
-        var response = await client.SendAsync(request);
+        HttpResponseMessage response = await client.SendAsync(request);
 
         response.EnsureSuccessStatusCode();
 
-        var content = await response.Content.ReadFromJsonAsync<ChatGptUnofficialProfile>();
+        ChatGptUnofficialProfile? content = await response.Content.ReadFromJsonAsync<ChatGptUnofficialProfile>();
 
         const string name = "__Secure-next-auth.session-token=";
-        var cookies = response.Headers.GetValues("Set-Cookie");
-        var sToken = cookies.FirstOrDefault(x => x.StartsWith(name));
+        IEnumerable<string> cookies = response.Headers.GetValues("Set-Cookie");
+        string? sToken = cookies.FirstOrDefault(x => x.StartsWith(name));
 
         SessionToken = sToken == null ? SessionToken : sToken.Replace(name, "");
 
         if (content is not null)
         {
-            if(content.Error is null) AccessToken = content.AccessToken;
+            if (content.Error is null) AccessToken = content.AccessToken;
         }
     }
 
     private async IAsyncEnumerable<string> StreamCompletion(Stream stream)
     {
-        using var reader = new StreamReader(stream);
+        using StreamReader reader = new(stream);
         while (!reader.EndOfStream)
         {
-            var line = await reader.ReadLineAsync();
+            string? line = await reader.ReadLineAsync();
             if (line != null)
             {
                 yield return line;
@@ -90,7 +86,7 @@ public class ChatGptUnofficial
             return new ChatGptUnofficialConversation();
         }
 
-        var conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
+        ChatGptUnofficialConversation? conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
 
         if (conversation != null) return conversation;
         conversation = new ChatGptUnofficialConversation
@@ -101,10 +97,10 @@ public class ChatGptUnofficial
 
         return conversation;
     }
-    
+
     public void SetConversation(string conversationId, ChatGptUnofficialConversation conversation)
     {
-        var conv = Conversations.FirstOrDefault(x => x.Id == conversationId);
+        ChatGptUnofficialConversation? conv = Conversations.FirstOrDefault(x => x.Id == conversationId);
 
         if (conv != null)
         {
@@ -115,10 +111,10 @@ public class ChatGptUnofficial
             Conversations.Add(conversation);
         }
     }
-    
+
     public void RemoveConversation(string conversationId)
     {
-        var conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
+        ChatGptUnofficialConversation? conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
 
         if (conversation != null)
         {
@@ -128,7 +124,7 @@ public class ChatGptUnofficial
 
     public void ResetConversation(string conversationId)
     {
-        var conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
+        ChatGptUnofficialConversation? conversation = Conversations.FirstOrDefault(x => x.Id == conversationId);
 
         if (conversation == null) return;
         conversation.ParentMessageId = Guid.NewGuid().ToString();
@@ -142,16 +138,16 @@ public class ChatGptUnofficial
 
     public async Task<string> Ask(string prompt, string? conversationId = null)
     {
-        var conversation = GetConversation(conversationId);
+        ChatGptUnofficialConversation conversation = GetConversation(conversationId);
 
-        var reply = await SendMessage(prompt, Guid.NewGuid().ToString(), conversation.ParentMessageId, conversation.ConversationId, Config.Model);
+        ChatGptUnofficialMessageResponse reply = await SendMessage(prompt, Guid.NewGuid().ToString(), conversation.ParentMessageId, conversation.ConversationId, Config.Model);
 
-        if(reply.ConversationId is not null)
+        if (reply.ConversationId is not null)
         {
             conversation.ConversationId = reply.ConversationId;
         }
 
-        if(reply.Message.Id is not null)
+        if (reply.Message.Id is not null)
         {
             conversation.ParentMessageId = reply.Message.Id;
         }
@@ -163,21 +159,21 @@ public class ChatGptUnofficial
 
     public async Task<string> AskStream(Action<string> callback, string prompt, string? conversationId = null)
     {
-        var conversation = GetConversation(conversationId);
+        ChatGptUnofficialConversation conversation = GetConversation(conversationId);
 
-        var reply = await SendMessage(prompt, Guid.NewGuid().ToString(), conversation.ParentMessageId, conversation.ConversationId, Config.Model,
+        ChatGptUnofficialMessageResponse reply = await SendMessage(prompt, Guid.NewGuid().ToString(), conversation.ParentMessageId, conversation.ConversationId, Config.Model,
             response =>
             {
-                var content = response.Message.Content.Parts.FirstOrDefault();
+                string? content = response.Message.Content.Parts.FirstOrDefault();
                 if (content is not null) callback(content);
             });
 
-        if(reply.ConversationId is not null)
+        if (reply.ConversationId is not null)
         {
             conversation.ConversationId = reply.ConversationId;
         }
 
-        if(reply.Message.Id is not null)
+        if (reply.Message.Id is not null)
         {
             conversation.ParentMessageId = reply.Message.Id;
         }
@@ -187,32 +183,35 @@ public class ChatGptUnofficial
         return reply.Message.Content.Parts.FirstOrDefault() ?? "";
     }
 
-    private bool ValidateToken(string token) {
-        if (string.IsNullOrWhiteSpace(token)) {
+    private bool ValidateToken(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
             return false;
         }
-    
-        var tokenParts = token.Split('.');
-        if (tokenParts.Length != 3) {
+
+        string[] tokenParts = token.Split('.');
+        if (tokenParts.Length != 3)
+        {
             return false;
         }
-        
+
         //Ensure the string length is a multiple of 4
-        var tokenPart = tokenParts[1];
-        var remainderLength = tokenPart.Length % 4;
+        string tokenPart = tokenParts[1];
+        int remainderLength = tokenPart.Length % 4;
         if (remainderLength > 0)
             tokenPart = tokenPart.PadRight(tokenPart.Length - remainderLength + 4, '=');
 
-        var decodedPayload = Encoding.UTF8.GetString(Convert.FromBase64String(tokenPart));
-        var parsed = JsonDocument.Parse(decodedPayload).RootElement;
-    
+        string decodedPayload = Encoding.UTF8.GetString(Convert.FromBase64String(tokenPart));
+        JsonElement parsed = JsonDocument.Parse(decodedPayload).RootElement;
+
         return DateTimeOffset.Now.ToUnixTimeMilliseconds() <= parsed.GetProperty("exp").GetInt64() * 1000;
     }
 
     public async Task<ChatGptUnofficialMessageResponse> SendMessage(string message, string messageId, string? parentMessageId = null, string? conversationId = null, string? model = null, Action<ChatGptUnofficialMessageResponse>? callback = null)
     {
-        if(!ValidateToken(AccessToken)) await RefreshAccessToken();
-        var requestData = new ChatGptUnofficialMessageRequest
+        if (!ValidateToken(AccessToken)) await RefreshAccessToken();
+        ChatGptUnofficialMessageRequest requestData = new()
         {
             Messages = new List<MessageElement>
             {
@@ -228,24 +227,24 @@ public class ChatGptUnofficial
                 }
             }
         };
- 
+
         if (model is not null)
         {
             requestData.Model = model;
         }
- 
+
         if (conversationId is not null)
         {
             requestData.ConversationId = conversationId;
         }
-        
+
         if (parentMessageId is not null)
         {
             requestData.ParentMessageId = parentMessageId;
         }
 
-        var client = new HttpClient();
-        var request = new HttpRequestMessage
+        HttpClient client = ChatGpt.httpClient;
+        HttpRequestMessage request = new()
         {
             Method = HttpMethod.Post,
             RequestUri = new Uri($"{Config.BaseUrl}/backend-api/conversation"),
@@ -262,17 +261,17 @@ public class ChatGptUnofficial
             }
         };
 
-        var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        HttpResponseMessage response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
         response.EnsureSuccessStatusCode();
 
-        var stream = await response.Content.ReadAsStreamAsync();
-        
+        Stream stream = await response.Content.ReadAsStreamAsync();
+
         ChatGptUnofficialMessageResponse? reply = null;
 
-        await foreach (var data in StreamCompletion(stream))
+        await foreach (string data in StreamCompletion(stream))
         {
-            var dataJson = data;
+            string dataJson = data;
             //Ignore ping event
             if (dataJson.StartsWith("event: "))
                 continue;
@@ -285,7 +284,7 @@ public class ChatGptUnofficial
             //Try Deserialize
             try
             {
-                var replyNew = JsonConvert.DeserializeObject<ChatGptUnofficialMessageResponse>(dataJson);
+                ChatGptUnofficialMessageResponse? replyNew = JsonConvert.DeserializeObject<ChatGptUnofficialMessageResponse>(dataJson);
                 if (replyNew == null)
                     continue;
                 reply = replyNew;
@@ -296,4 +295,7 @@ public class ChatGptUnofficial
 
         return reply ?? new ChatGptUnofficialMessageResponse();
     }
+
+
+
 }
