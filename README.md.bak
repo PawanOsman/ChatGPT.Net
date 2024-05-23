@@ -91,10 +91,6 @@ Console.WriteLine(response);
 await bot.AskStream(response => {
     Console.WriteLine(response);
 }, "What is the weather like today?", "conversation name");
-
-// Set a system message
-bot.SetConversationSystemMessage("conversation name", "You are a helpful assistant that provides clear and concise answers to questions.");
-
 ```
 
 ### ChatGPT Unofficial API
