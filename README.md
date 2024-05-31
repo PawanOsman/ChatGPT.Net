@@ -91,6 +91,43 @@ Console.WriteLine(response);
 await bot.AskStream(response => {
     Console.WriteLine(response);
 }, "What is the weather like today?", "conversation name");
+
+// Set a system message
+bot.SetConversationSystemMessage("conversation name", "You are a helpful assistant that provides clear and concise answers to questions.");
+```
+Some models can understand both text and images. To use this feature, you need to pass a list of content items that includes both text and images. 
+
+```csharp
+// To stream responses with both image and text input, create a list of content items
+var contentItems = new List<ChatGptMessageContentItem>();
+
+// Each content item can be either "Text" type or "Image" type. Let's add text to inquire about the image
+contentItems.Add(new ChatGptMessageContentItem()
+{
+    Type = ChatGptMessageContentType.TEXT,
+    Text = "what is this image about?"
+});
+
+// Now, create another content item of "Image" type
+var contentItemWithImage = new ChatGptMessageContentItem()
+{
+    Type = ChatGptMessageContentType.IMAGE
+};
+// Set image by path
+contentItemWithImage.SetImageFromFile("<path-to-file>");
+// Or set image by Url
+contentItemWithImage.SetImageFromUrl("https://path-to-image.com/image.png");
+// Or set base64 image url
+contentItemWithImage.SetImageFromUrl("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA.....");
+
+contentItems.Add(contentItemWithImage);
+
+// Only specific models understand image input. Therefore, if you are using 'gpt-3.5-turbo' or similar model, switch or override the model before calling 'AskStream'. More details about `ChatGptOptions` (config) are covered in the next section.
+config.Model = ChatGptModels.GPT_4_Vision_Preview;
+
+var response = await bot.AskStream(response => {
+    Console.WriteLine(response);
+}, contentItems, "conversation name");
 ```
 
 ### ChatGPT Unofficial API
@@ -120,6 +157,7 @@ Console.WriteLine(response);
 await bot.AskStream(response => {
     Console.WriteLine(response);
 }, "What is the weather like today?", "conversation name");
+
 ```
 
 ## Configuration options
