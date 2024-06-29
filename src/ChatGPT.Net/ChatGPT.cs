@@ -39,10 +39,9 @@ public class ChatGpt
     public void SetConversationSystemMessage(string conversationId, string message)
     {
         var conversation = GetConversation(conversationId);
-        conversation.Messages.Add(new ChatGptMessage
+        conversation.Messages.Add(new ChatGptMessage(message)
         {
-            Role = "system",
-            Content = message
+            Role = ChatGptMessageRoles.SYSTEM,
         });
     }
 
@@ -50,10 +49,9 @@ public class ChatGpt
     {
         var conversation = GetConversation(conversationId);
         conversation.Messages = conversation.Messages.Where(x => x.Role != "system").ToList();
-        conversation.Messages.Add(new ChatGptMessage
+        conversation.Messages.Add(new ChatGptMessage(message)
         {
-            Role = "system",
-            Content = message
+            Role = ChatGptMessageRoles.SYSTEM,
         });
     }
     
@@ -133,10 +131,9 @@ public class ChatGpt
     {
         var conversation = GetConversation(conversationId);
 
-        conversation.Messages.Add(new ChatGptMessage
+        conversation.Messages.Add(new ChatGptMessage(prompt)
         {
-            Role = "user",
-            Content = prompt
+            Role = ChatGptMessageRoles.USER,
         });
         
         var reply = await SendMessage(new ChatGptRequest
@@ -154,12 +151,11 @@ public class ChatGpt
         
         conversation.Updated = DateTime.Now;
 
-        var response = reply.Choices.FirstOrDefault()?.Message.Content ?? "";
+        var response = reply.Choices.FirstOrDefault()?.Message.GetContent ?? "";
 
-        conversation.Messages.Add(new ChatGptMessage
+        conversation.Messages.Add(new ChatGptMessage(response)
         {
-            Role = "assistant",
-            Content = response
+            Role = ChatGptMessageRoles.ASSISTANT,
         });
 
         return response;
@@ -169,10 +165,9 @@ public class ChatGpt
     {
         var conversation = GetConversation(conversationId);
 
-        conversation.Messages.Add(new ChatGptMessage
+        conversation.Messages.Add(new ChatGptMessage(prompt)
         {
-            Role = "user",
-            Content = prompt
+            Role = ChatGptMessageRoles.USER,
         });
 
         var reply = await SendMessage(new ChatGptRequest
@@ -195,7 +190,42 @@ public class ChatGpt
         
         conversation.Updated = DateTime.Now;
 
-        return reply.Choices.FirstOrDefault()?.Message.Content ?? "";
+        return reply.Choices.FirstOrDefault()?.Message.GetContent ?? "";
+    }
+
+    public async Task<string> AskStream(Action<string> callback, List<ChatGptMessageContentItem> promptContentItems, string? conversationId = null)
+    {
+        await ValidateContentItems(promptContentItems);
+
+        var conversation = GetConversation(conversationId);
+        var msg = new ChatGptMessage()
+        {
+            Role = ChatGptMessageRoles.USER,
+        };
+        msg.ContentItems.AddRange(promptContentItems);
+        conversation.Messages.Add(msg);
+
+        var reply = await SendMessage(new ChatGptRequest
+        {
+            Messages = conversation.Messages,
+            Model = Config.Model,
+            Stream = true,
+            Temperature = Config.Temperature,
+            TopP = Config.TopP,
+            FrequencyPenalty = Config.FrequencyPenalty,
+            PresencePenalty = Config.PresencePenalty,
+            Stop = Config.Stop,
+            MaxTokens = Config.MaxTokens,
+        }, response =>
+        {
+            var content = response.Choices.FirstOrDefault()?.Delta.Content;
+            if (content is null) return;
+            if (!string.IsNullOrWhiteSpace(content)) callback(content);
+        });
+
+        conversation.Updated = DateTime.Now;
+
+        return reply.Choices.FirstOrDefault()?.Message.GetContent ?? "";
     }
 
     public async Task<ChatGptResponse> SendMessage(ChatGptRequest requestBody, Action<ChatGptStreamChunkResponse>? callback = null)
@@ -209,7 +239,7 @@ public class ChatGpt
             {
                 {"Authorization", $"Bearer {APIKey}" }
             },
-            Content = new StringContent(JsonConvert.SerializeObject(requestBody))
+            Content = new StringContent(JsonConvert.SerializeObject(requestBody, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore }))
             {
                 Headers =
                 {
@@ -249,16 +279,13 @@ public class ChatGpt
             return new ChatGptResponse
             {
                 Id = reply?.Id ?? Guid.NewGuid().ToString(),
-                Model = reply?.Model ?? "gpt-3.5-turbo",
+                Model = reply?.Model ?? ChatGptModels.GPT_3_5_Turbo,
                 Created = reply?.Created ?? 0,
                 Choices = new List<Choice>
                 {
                     new()
                     {
-                        Message = new ChatGptMessage
-                        {
-                            Content = concatMessages
-                        }
+                        Message = new ChatGptMessage(concatMessages)
                     }
                 }
             };
@@ -268,5 +295,36 @@ public class ChatGpt
         if(content is null) throw new Exception("Unknown error");
         if(content.Error is not null) throw new Exception(content.Error.Message);
         return content;
+    }
+
+    /// <summary>
+    /// Validates ContentItems array for text and image type of chat completion request
+    /// </summary>
+    /// <param name="promptContentItems"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException">Thrown when invalid configuration is detected</exception>
+    /// <exception cref="InvalidOperationException">Thrown when invalid content item is detected</exception>
+    private async Task ValidateContentItems(List<ChatGptMessageContentItem> promptContentItems)
+    {
+        if (promptContentItems is null || promptContentItems.Count == 0)
+            throw new ArgumentException("Invalid request. No message to send.");
+
+        if (promptContentItems.Any(x => x.Type == ChatGptMessageContentType.IMAGE)
+            && Config.Model != ChatGptModels.GPT_4_Vision_Preview)
+            throw new ArgumentException("Invalid model. This model cannot understand images.", "ChatGptOptions.Model");
+
+        //Validate 'text' type of content items
+        var textTypeItems = promptContentItems.Where(x => x.Type == ChatGptMessageContentType.TEXT).ToList();
+        if (textTypeItems.Any(x => x.GetImageUrl?.Length > 0))
+            throw new InvalidOperationException("Invalid request. One of the content item has content type set as 'text' but image URL is provided. Only one should be set in single content item.");
+        if (textTypeItems.Any(x => string.IsNullOrWhiteSpace(x.Text)))
+            throw new InvalidOperationException("Invalid request. One of the content item has content type set as 'text' but 'text' value is not set for this content item.");
+        
+        //validate 'image_url' type of content items.
+        var imageTypeItems = promptContentItems.Where(x => x.Type == ChatGptMessageContentType.IMAGE).ToList();
+        if (imageTypeItems.Any(x => x.Text is not null && x.Text.Length > 0))
+            throw new InvalidOperationException("Invalid operation. One of the content item has message content type set as 'image' but text value is provided. Only one should be set in single content item.");
+        if (imageTypeItems.Any(x => string.IsNullOrWhiteSpace(x.GetImageUrl)))
+            throw new InvalidOperationException("Invalid operation. One of the content item has content type set as 'image' but 'imageUrl' value is not set for this content item.");
     }
 }

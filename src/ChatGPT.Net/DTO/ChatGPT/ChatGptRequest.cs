@@ -5,7 +5,7 @@ namespace ChatGPT.Net.DTO.ChatGPT;
 public partial class ChatGptRequest
 {
     [JsonProperty("model")]
-    public string Model { get; set; } = "gpt-3.5-turbo";
+    public string Model { get; set; } = ChatGptModels.GPT_3_5_Turbo;
 
     [JsonProperty("temperature")]
     public double Temperature { get; set; } = 0.7;
